@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{{ message }}
+
+<div class = "container">
+	  
+  <form class = "form-signin span4" id="product_form" method= "post" action= "/en/partal/product/">
+    <h2 class = "form-signin-heading">Add Commodity</h2>
+    {% csrf_token %}
+
+    <!-- Display each form -->
+    {% for field in product_form.visible_fields %}
+    {{ field.errors }}
+    {{ field.help_text }}<br />
+    {{ field }}<br />
+    {% endfor %}
+    <!-- Provide a click to submit the form -->
+    <input type = "submit" name = "submit" value = "Add Product" />
+  </form>
+</div>
+
+{% endblock %}
