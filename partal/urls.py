@@ -10,6 +10,7 @@ urlpatterns = patterns('',
                        url(r'^firm/$', views.firm_register, name = 'firm'),
                        url(r'^commodity/$', views.add_commodity, name = 'commodity'),
                        url(r'^product/$', views.add_product, name = 'product'),
+                       url(r'^purchase/$', views.purchase_invoice, name = 'purchase'),
                        )
 
 

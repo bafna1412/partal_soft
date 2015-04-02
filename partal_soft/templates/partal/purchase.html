@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{{ message }}
+
+
+<div class = "container">
+  {{ name }}<br />
+  {{ commodity }}<br />
+  <div class="multicolumn3 clearfix">
+    <div class="colunm" style="width: 25%; float: left;">
+      {% for product in products %}
+      {{ product }}<br />
+      {% endfor %}
+    </div>
+    <div class="colunm" style="width: 25%; float: left;">
+      {% for weight in weights %}
+      {{ weight|floatformat:2 }}<br />
+      {% endfor %}
+    </div>
+    <div class="colunm" style="width: 25%; float: left;">
+      {% for bag in bags %}
+      {{ bag }}<br />
+      {% endfor %}
+    </div>
+    <div class="colunm" style="width: 25%; float: left;">
+      {% for amount in amounts %}
+      {{ amount|floatformat:2 }}<br />
+      {% endfor %}
+    </div>
+  </div>
+  <p align = "right">
+    {{ net_loose_amount|floatformat:2 }}<br />
+    {{ commission|floatformat:2 }}<br />
+    {{ mandi_tax|floatformat:2 }}<br />
+    {{ dharmada|floatformat:2 }}<br />
+    {{ association_charges|floatformat:2 }}<br />
+    {{ gross_amount|floatformat:2 }}<br />
+    {{ VAT|floatformat:2 }}<br />
+    {{ muddat|floatformat:2 }}<br />
+    {{ TDS|floatformat:2 }}<br />
+    {{ net_amount|floatformat:2 }}<br />
+  </p>
+  <form class = "form-signin span4" id="purchase_form" method= "post" action= "/en/partal/purchase/">
+    <h2 class = "form-signin-heading">Purchase Invoice</h2>
+    {% csrf_token %}
+
+    <!-- Display each form -->
+    {% for field in purchase_form.visible_fields %}
+    {{ field.errors }}
+    {{ field.help_text }}<br />
+    {{ field }}<br />
+    {% endfor %}
+
+    <br />
+
+    <table id="dataTable" width="1000px">
+      <tbody><tr>
+	  <div class="multicolumn3 clearfix">
+	    <td><input type="checkbox" name="chk"></td>
+	    {% for field in purchase_detail_form.visible_fields %}
+	    <div class="column" style="width: 25%; float: left;">
+	      <td>{{ field.errors }}
+		{{ field.help_text }}<br />
+		{{ field }}<td><br />
+	    </div>
+	    {% endfor %}
+	  </div>
+	</tr>
+    </tbody></table>
+    <p align = "right">
+    <input type="button" value="Add Row" onclick="addRow('dataTable')">
+    <input type="button" value="Delete Row" onclick="deleteRow('dataTable')">
+    </p>
+    <br />
+    <!-- Provide a click to submit the form -->
+    <input type = "submit" name = "submit" value = "Submit" />
+  </form>
+</div>
+
+<script language="javascript">function addRow(tableID){var table=document.getElementById(tableID);var rowCount=table.rows.length;var row=table.insertRow(rowCount);var colCount=table.rows[0].cells.length;for(var i=0;i<colCount;i++){var newcell=row.insertCell(i);newcell.innerHTML=table.rows[0].cells[i].innerHTML;switch(newcell.childNodes[0].type){case"text":newcell.childNodes[0].value="";break;case"checkbox":newcell.childNodes[0].checked=false;break;case"select-one":newcell.childNodes[0].selectedIndex=0;break;}}}
+function deleteRow(tableID){try{var table=document.getElementById(tableID);var rowCount=table.rows.length;for(var i=0;i<rowCount;i++){var row=table.rows[i];var chkbox=row.cells[0].childNodes[0];if(null!=chkbox&&true==chkbox.checked){if(rowCount<=1){alert("Cannot delete all the rows.");break;}
+table.deleteRow(i);rowCount--;i--;}}}catch(e){alert(e);}}</script>
+
+{% endblock %}
+

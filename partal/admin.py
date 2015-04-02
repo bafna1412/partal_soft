@@ -9,11 +9,11 @@ class FirmAdmin(admin.ModelAdmin):
 
 class CommodityAdmin(admin.ModelAdmin):
 
-    list_display = ('name', 'net_stock_raw', 'net_stock_processed', 'bags_raw', 'bags_processed', 'date', 'daily_purchase', 'total_purchase')
+    list_display = ('name', 'net_stock_raw', 'net_stock_processed', 'bags_raw', 'bags_processed')
 
 class ProductAdmin(admin.ModelAdmin):
 
-    list_display = ('name', 'family', 'net_stock_raw', 'net_stock_processed', 'bags_raw', 'bags_processed', 'date', 'daily_purchase', 'total_purchase')
+    list_display = ('name', 'family', 'net_stock_raw', 'net_stock_processed', 'bags_raw', 'bags_processed')
 
 class RateDetailAdmin(admin.ModelAdmin):
 
@@ -21,15 +21,21 @@ class RateDetailAdmin(admin.ModelAdmin):
 
 class PurchaseInvoiceAdmin(admin.ModelAdmin):
 
-    list_display = ('date', 'merchant', 'seller_invoice_no', 'commission', 'mandi_tax', 'association_charges', 'dharmada', 'muddat', 'VAT', 'TDS', 'amount')
+    list_display = ('id', 'date', 'merchant', 'seller_invoice_no', 'commodity', 'commission', 'mandi_tax', 'association_charges', 'dharmada', 'muddat', 'VAT', 'TDS', 'amount')
  
-class PurchaseDetailAdmin(admin.ModelAdmin):
+class PurchaseInvoiceDetailAdmin(admin.ModelAdmin):
 
-    list_display = ('invoice', 'product', 'weight', 'bharti', 'rate', 'bags')
+    list_display = ('invoice_no', 'product_type', 'merchant', 'weight', 'bharti', 'rate', 'bags', 'amount')
+
+class DailyPurchaseAdmin(admin.ModelAdmin):
+
+    list_display = ('date', 'product_name', 'product_weight', 'product_bags')
+
 
 admin.site.register(Firm, FirmAdmin)
 admin.site.register(Commodity, CommodityAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(RateDetail, RateDetailAdmin)
 admin.site.register(PurchaseInvoice, PurchaseInvoiceAdmin)
-admin.site.register(PurchaseDetail, PurchaseDetailAdmin)
+admin.site.register(PurchaseInvoiceDetail, PurchaseInvoiceDetailAdmin)
+admin.site.register(DailyPurchase, DailyPurchaseAdmin)

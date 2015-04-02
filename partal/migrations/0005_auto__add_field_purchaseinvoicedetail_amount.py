@@ -8,70 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'PurchaseDetail'
-        db.create_table(u'partal_purchasedetail', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('invoice', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['partal.PurchaseInvoice'])),
-            ('product', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['partal.Product'])),
-            ('weight', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('bharti', self.gf('django.db.models.fields.PositiveIntegerField')(max_length=2)),
-            ('rate', self.gf('django.db.models.fields.PositiveIntegerField')(max_length=5)),
-            ('bags', self.gf('django.db.models.fields.PositiveIntegerField')()),
-        ))
-        db.send_create_signal(u'partal', ['PurchaseDetail'])
-
-        # Deleting field 'PurchaseInvoice.bags'
-        db.delete_column(u'partal_purchaseinvoice', 'bags')
-
-        # Deleting field 'PurchaseInvoice.product'
-        db.delete_column(u'partal_purchaseinvoice', 'product_id')
-
-        # Deleting field 'PurchaseInvoice.weight'
-        db.delete_column(u'partal_purchaseinvoice', 'weight')
-
-        # Deleting field 'PurchaseInvoice.bharti'
-        db.delete_column(u'partal_purchaseinvoice', 'bharti')
-
-        # Deleting field 'PurchaseInvoice.rate'
-        db.delete_column(u'partal_purchaseinvoice', 'rate')
-
-        # Adding field 'PurchaseInvoice.seller_invoice_no'
-        db.add_column(u'partal_purchaseinvoice', 'seller_invoice_no',
-                      self.gf('django.db.models.fields.CharField')(default='None', max_length=10),
+        # Adding field 'PurchaseInvoiceDetail.amount'
+        db.add_column(u'partal_purchaseinvoicedetail', 'amount',
+                      self.gf('django.db.models.fields.DecimalField')(default=0.0, max_digits=15, decimal_places=2),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting model 'PurchaseDetail'
-        db.delete_table(u'partal_purchasedetail')
-
-        # Adding field 'PurchaseInvoice.bags'
-        db.add_column(u'partal_purchaseinvoice', 'bags',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=0),
-                      keep_default=False)
-
-        # Adding field 'PurchaseInvoice.product'
-        db.add_column(u'partal_purchaseinvoice', 'product',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=None, to=orm['partal.Product']),
-                      keep_default=False)
-
-        # Adding field 'PurchaseInvoice.weight'
-        db.add_column(u'partal_purchaseinvoice', 'weight',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=0),
-                      keep_default=False)
-
-        # Adding field 'PurchaseInvoice.bharti'
-        db.add_column(u'partal_purchaseinvoice', 'bharti',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=0, max_length=2),
-                      keep_default=False)
-
-        # Adding field 'PurchaseInvoice.rate'
-        db.add_column(u'partal_purchaseinvoice', 'rate',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=0, max_length=5),
-                      keep_default=False)
-
-        # Deleting field 'PurchaseInvoice.seller_invoice_no'
-        db.delete_column(u'partal_purchaseinvoice', 'seller_invoice_no')
+        # Deleting field 'PurchaseInvoiceDetail.amount'
+        db.delete_column(u'partal_purchaseinvoicedetail', 'amount')
 
 
     models = {
@@ -113,47 +58,43 @@ class Migration(SchemaMigration):
         },
         u'partal.commodity': {
             'Meta': {'object_name': 'Commodity'},
-            'bags_processed': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'bags_raw': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'daily_purchase': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 3, 28, 0, 0)'}),
+            'avg_price_processed': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'avg_price_raw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'bags_processed': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'bags_raw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '20', 'primary_key': 'True'}),
-            'net_stock_processed': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'net_stock_raw': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'total_purchase': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
+            'net_stock_processed': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'net_stock_raw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
+        },
+        u'partal.dailypurchase': {
+            'Meta': {'object_name': 'DailyPurchase'},
+            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 4, 1, 0, 0)'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Product']"}),
+            'product_bags': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'product_weight': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
         },
         u'partal.firm': {
             'Meta': {'object_name': 'Firm'},
-            'PAN': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'TIN': ('django.db.models.fields.CharField', [], {'max_length': '9'}),
+            'PAN': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '10'}),
+            'TIN': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '11'}),
             'address': ('django.db.models.fields.TextField', [], {}),
-            'contact_number': ('django.db.models.fields.PositiveIntegerField', [], {'max_length': '10'}),
+            'contact_number': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'primary_key': 'True'}),
-            'net_commission': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'net_purchase_amount': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'net_purchase_weight': ('django.db.models.fields.PositiveIntegerField', [], {})
+            'net_commission': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'net_purchase_amount': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'net_purchase_weight': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
         },
         u'partal.product': {
             'Meta': {'object_name': 'Product'},
-            'bags_processed': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'bags_raw': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'avg_price_processed': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'avg_price_raw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'bags_processed': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'bags_raw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'commodity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Commodity']"}),
-            'daily_purchase': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 3, 28, 0, 0)'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '20', 'primary_key': 'True'}),
-            'net_stock_processed': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'net_stock_raw': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'total_purchase': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
-        },
-        u'partal.purchasedetail': {
-            'Meta': {'object_name': 'PurchaseDetail'},
-            'bags': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'bharti': ('django.db.models.fields.PositiveIntegerField', [], {'max_length': '2'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.PurchaseInvoice']"}),
-            'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Product']"}),
-            'rate': ('django.db.models.fields.PositiveIntegerField', [], {'max_length': '5'}),
-            'weight': ('django.db.models.fields.PositiveIntegerField', [], {})
+            'net_stock_processed': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'net_stock_raw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
         },
         u'partal.purchaseinvoice': {
             'Meta': {'object_name': 'PurchaseInvoice'},
@@ -162,13 +103,25 @@ class Migration(SchemaMigration):
             'amount': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'association_charges': ('django.db.models.fields.DecimalField', [], {'max_digits': '7', 'decimal_places': '2'}),
             'commission': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'}),
-            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 3, 28, 0, 0)'}),
+            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 4, 1, 0, 0)'}),
             'dharmada': ('django.db.models.fields.DecimalField', [], {'max_digits': '7', 'decimal_places': '2'}),
+            'family': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Commodity']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'mandi_tax': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'}),
             'muddat': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'}),
             'seller': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Firm']"}),
             'seller_invoice_no': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '10'})
+        },
+        u'partal.purchaseinvoicedetail': {
+            'Meta': {'object_name': 'PurchaseInvoiceDetail'},
+            'amount': ('django.db.models.fields.DecimalField', [], {'max_digits': '15', 'decimal_places': '2'}),
+            'bags': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'bharti': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'max_length': '2'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.PurchaseInvoice']"}),
+            'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Product']"}),
+            'rate': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'max_length': '5'}),
+            'weight': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
         },
         u'partal.ratedetail': {
             'Meta': {'object_name': 'RateDetail'},

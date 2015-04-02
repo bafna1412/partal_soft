@@ -140,9 +140,7 @@ INSTALLED_APPS = (
     'south',
     'reversion',
     'partal_soft',
-    'polls',
     'partal',
-    'plugin',
 )
 
 
