@@ -11,6 +11,8 @@ urlpatterns = patterns('',
                        url(r'^commodity/$', views.add_commodity, name = 'commodity'),
                        url(r'^product/$', views.add_product, name = 'product'),
                        url(r'^purchase/$', views.purchase_invoice, name = 'purchase'),
+                       url(r'^process/$', views.process_entry, name = 'process'),
+                       url(r'^sale/$', views.sale_invoice, name = 'sale'),
                        )
 
 

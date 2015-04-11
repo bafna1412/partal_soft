@@ -9,6 +9,7 @@ from partal.forms import *
 
 # Create your views here.
 
+
 # Login for Partal Entry
 def index(request):
     context_dict = {}
@@ -202,33 +203,30 @@ def purchase_invoice(request):
     purchase_detail_form = PurchaseDetailForm()
 
     if request.method == 'POST':
+
         merchant = Firm.objects.get(name = request.POST['seller'])
         commodity = Commodity.objects.get(name = request.POST['family'])
         charges = RateDetail.objects.get(id = 1)
-
-        """
-        # Grab the data
-        purchase_form = PurchaseForm(data = request.POST)
-        purchase_detail_form = PurchaseDetailForm(data = request.POST)
-
-        # Check if data is valid
-        if purchase_form.is_valid() and purchase_detail_form.is_valid():
-        """
+        
         dict = {}
         for key in request.POST:
             list = request.POST.getlist(key)
             dict.update({key: [val for val in list]})
+        
         date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
         dict.update({"date": date})
-        print dict['date']
+        
         # Calculating Number of bags per entry
         bags = []
         b = 0
         for _ in dict['weight']:
             bag = float(_)/float(dict['bharti'][b])
             
-            if bag % int(bag) > 0:
+            if bag % int(bag) >= 0.05:
                 bag = int(bag) + 1
+            else:
+                bag = int(bag)
+
             bags.append(bag)
             b = b+1
         dict.update({"bags": bags})
@@ -253,8 +251,16 @@ def purchase_invoice(request):
         # Calculating Commission
         commission = (net_loose_amount*charges.commission)/100
         # Updating Merchant Commission
-        merchant.net_commission = merchant.net_commission + commission
-        merchant.save()
+        if request.POST['firm'] == str('APB'):
+
+            merchant.net_commission_APB = merchant.net_commission_APB + commission
+            merchant.save()
+        
+        else:
+
+            merchant.net_commission_KY = merchant.net_commission_KY + commission
+            merchant.save()
+        
         
         # Calculating Mandi Tax
         mandi_tax = (net_loose_amount*charges.mandi_tax)/100
@@ -289,30 +295,45 @@ def purchase_invoice(request):
 
         # Calculating VAT
         VAT = (gross_amount*charges.VAT)/100
-        print VAT
-
+        
         # Calculating Muddat
         muddat = (net_loose_amount*charges.muddat)/100
-        print muddat
         
         # TDS Calculation
-        if merchant.net_commission > 5000:
-            if (merchant.net_commission - commission) < 5000:
-                TDS = (merchant.net_commission*10)/100
-            else:
-                TDS = (commission*10)/100
-        else:
-            TDS = 0
+        if request.POST['firm'] == str('APB'):
 
+            if merchant.net_commission_APB >= 5000:
+                if (merchant.net_commission_APB - commission) < 5000:
+                    TDS = (merchant.net_commission_APB*10)/100
+                else:
+                    TDS = (commission*10)/100
+            else:
+                TDS = 0
+        else:
+            
+            if merchant.net_commission_KY >= 5000:
+                if (merchant.net_commission_KY - commission) < 5000:
+                    TDS = (merchant.net_commission_KY*10)/100
+                else:
+                    TDS = (commission*10)/100
+            else:
+                TDS = 0
+        # Updating Merchant Monthly TDS
+        if request.POST['firm'] == str('APB'):
+
+            merchant.monthly_TDS_APB = float(merchant.monthly_TDS_APB) + TDS
+            merchant.save()
+       
+        else:
+            
+            merchant.monthly_TDS_KY = float(merchant.monthly_TDS_KY) + TDS
+            merchant.save()
+       
         # Calculating Net Amount
         net_amount = (gross_amount + VAT) - muddat - TDS
-
-        if net_amount % net_amount > 0.5:
-            round_off = 1
-        else:
-            round_off = 0
+        
         # Updating Merchant Net Amount
-        merchant.net_purchase_amount = merchant.net_purchase_amount + net_amount
+        merchant.net_purchase_amount = int(merchant.net_purchase_amount) + net_amount
         merchant.save()
         
         # Saving Purchase Invoice
@@ -320,6 +341,9 @@ def purchase_invoice(request):
                                            seller = merchant,
                                            seller_invoice_no = request.POST['seller_invoice_no'],
                                            family = commodity,
+                                           weight = net_weight,
+                                           bags = total_bags,
+                                           net_loose_amount = net_loose_amount,
                                            commission = commission,
                                            mandi_tax = mandi_tax,
                                            association_charges = association_charges,
@@ -327,7 +351,7 @@ def purchase_invoice(request):
                                            muddat = muddat,
                                            VAT = VAT,
                                            TDS = TDS,
-                                           amount = net_amount + round_off)
+                                           amount = net_amount)
         purchase_invoice.save()
 
         # Updating Product Data, Purchase Inovice Detail and Daily Purchase
@@ -345,7 +369,8 @@ def purchase_invoice(request):
                                                             bharti = dict['bharti'][num],
                                                             rate = dict['rate'][num],
                                                             bags = dict['bags'][num],
-                                                            amount = dict['amounts'][num])
+                                                            amount = dict['amounts'][num],
+                                                            )
             purchase_invoice_detail.save()
             num =num + 1
         
@@ -355,53 +380,90 @@ def purchase_invoice(request):
         if not entries:
             for _ in dict['product']:
                 product = Product.objects.get(name = _)
-                daily_purchase = DailyPurchase(date = dict['date'],
-                                               product = product,
-                                               product_weight = dict['weight'][num],
-                                               product_bags = dict['bags'][num])
-                daily_purchase.save()
-                num = num + 1
+                try:
+                    entry = DailyPurchase.objects.get(date = dict['date'], product = product)
+                
+                except DailyPurchase.DoesNotExist:
+
+                    daily_purchase = DailyPurchase(date = dict['date'],
+                                                   product = product,
+                                                   product_weight = dict['weight'][num],
+                                                   product_bags = dict['bags'][num],
+                                                   total_purchase_amount = dict['amounts'][num],
+                                                   )
+                    daily_purchase.save()
+                  
+                    daily_purchase.rate = float(daily_purchase.total_purchase_amount)/float(daily_purchase.product_weight)
+                    daily_purchase.save()
+
+                    num = num + 1
+                
+                else:
+                    
+                    entry.product_weight = entry.product_weight + float(dict['weight'][num])
+                    entry.product_bags = entry.product_bags + int(dict['bags'][num])
+                    entry.total_purchase_amount = entry.total_purchase_amount + float(dict['amounts'][num])
+                    entry.save()
+
+                    entry.rate = float(entry.total_purchase_amount)/float(entry.product_weight)
+                    entry.save()
+
+                    num = num + 1
 
         else:
             for _ in dict['product']:
                 product = Product.objects.get(name = _)
                 
                 try:
-                    entry = DailyPurchase.objects.get(product = product)
+                    entry = DailyPurchase.objects.get(date = dict['date'], product = product)
             
                 except DailyPurchase.DoesNotExist:
                     daily_purchase = DailyPurchase(date = dict['date'],
                                                    product = product,
                                                    product_weight = dict['weight'][num],
-                                                   product_bags = dict['bags'][num])
+                                                   product_bags = dict['bags'][num],
+                                                   total_purchase_amount = dict['amounts'][num],
+                                                   )
                     daily_purchase.save()
+                    
+                    daily_purchase.rate = float(daily_purchase.total_purchase_amount)/float(daily_purchase.product_weight)
+                    daily_purchase.save()
+                    
                     num = num + 1
                     
                     
                 else:
                     entry.product_weight = entry.product_weight + float(dict['weight'][num])
                     entry.product_bags = entry.product_bags + int(dict['bags'][num])
+                    entry.total_purchase_amount = entry.total_purchase_amount + float(dict['amounts'][num])
                     entry.save()
+
+                    entry.rate = float(entry.total_purchase_amount)/float(entry.product_weight)
+                    entry.save()
+
                     num = num + 1
 
                     
-        context_dict = {"name": request.POST['seller'],
-                        "commodity":request.POST['family'],
-                        "products": dict['product'],
-                        "weights": dict['weight'],
-                        "bags": dict['bags'],
-                        "amounts": dict['amounts'],
-                        "net_loose_amount": net_loose_amount,
-                        "commission": commission,
-                        "mandi_tax": mandi_tax,
-                        "dharmada":dharmada,
-                        "association_charges": association_charges,
-                        "gross_amount": gross_amount,
-                        "VAT": VAT,
-                        "muddat": muddat,
-                        "TDS": TDS,
-                        "net_amount": net_amount,
-                        }
+        context_dict = {
+            "invoice_no": purchase_invoice.id,
+            "name": request.POST['seller'],
+            "commodity":request.POST['family'],
+            "products": dict['product'],
+            "weights": dict['weight'],
+            "bags": dict['bags'],
+            "rates": dict['rate'],
+            "amounts": dict['amounts'],
+            "net_loose_amount": net_loose_amount,
+            "commission": commission,
+            "mandi_tax": mandi_tax,
+            "dharmada":dharmada,
+            "association_charges": association_charges,
+            "gross_amount": gross_amount,
+            "VAT": VAT,
+            "muddat": muddat,
+            "TDS": TDS,
+            "net_amount": net_amount,
+            }
         return render(request, 'partal/purchase.html', context_dict)
                     
     else:
@@ -411,4 +473,239 @@ def purchase_invoice(request):
 
         return render(request, 'partal/purchase.html', context_dict)
 
-    
+
+# Sale Invoice
+def sale_invoice(request):
+
+    context_dict = {}
+    sale_form = SaleForm()
+    sale_detail_form = SaleDetailForm()
+
+    if request.method == 'POST':
+
+        client = Client.objects.get(name = request.POST['buyer'])
+        commodity = Commodity.objects.get(name = request.POST['family'])
+        charges = RateDetail.objects.get(id = 1)
+        
+        dict = {}
+        for key in request.POST:
+            list = request.POST.getlist(key)
+            dict.update({key: [val for val in list]})
+        
+        date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
+        dict.update({"date": date})
+        
+        # Calculating Number of bags per entry
+        bags = []
+        b = 0
+        for _ in dict['weight']:
+            bag = float(_)/float(dict['bharti'][b])
+            
+            if bag % int(bag) >= 0.05:
+                bag = int(bag) + 1
+            else:
+                bag = int(bag)
+
+            bags.append(bag)
+            b = b+1
+        dict.update({"bags": bags})
+        
+        # Calculating Amount per entry
+        amounts = []
+        r = 0
+        for _ in dict['weight']:
+            amount = (float(_)*float(dict['rate'][r]))/100
+            
+            amounts.append(amount)
+            r = r+1
+        dict.update({"amounts": amounts})
+        
+        # Calculate Net Amount and saving data
+
+        # Calculation Net Loose Amount
+        net_loose_amount = 0
+        for _ in dict['amounts']:
+            net_loose_amount = net_loose_amount + _
+        
+        # Calculating Total number of bags
+        total_bags = 0
+        for _ in dict['bags']:
+            total_bags = total_bags + _
+        # Updating Commodity Bags
+        if request.POST['storage'] == str('Godown'):
+           
+            commodity.bags_processed = commodity.bags_processed - total_bags
+            commodity.save()
+
+        else:
+
+            commodity.bags_cold = commodity.bags_cold - total_bags
+            commodity.save()
+
+        # Calculating Total Weight in Kgs
+        net_weight = 0
+        for _ in dict['weight']:
+            net_weight = net_weight + float(_)
+        # Updating Client Net Weight
+        client.net_sale_weight = client.net_sale_weight + net_weight
+        client.save()
+        # Updating Commodity Net Stock
+        if request.POST['storage'] == str('Godown'):
+        
+            commodity.net_stock_processed = commodity.net_stock_processed - net_weight
+            commodity.save()
+
+        else:
+
+            commodity.stock_cold = commodity.stock_cold - net_weight
+            commodity.save()
+
+        # Calculating Insurance
+        insurance = (net_loose_amount*charges.insurance)/100
+        
+        # Calculating VAT
+        VAT = (net_loose_amount*charges.VAT)/100
+        
+        # Calculating Net Amount
+        net_amount = net_loose_amount + VAT + insurance
+        
+        # Updating Client Net Amount
+        client.net_sale_amount = int(client.net_sale_amount) + net_amount
+        client.save()
+        
+        # Saving Sale Invoice
+        sale_invoice = SaleInvoice(date = dict['date'],
+                                   buyer = client,
+                                   invoice_no = request.POST['invoice_no'],
+                                   family = commodity,
+                                   weight = net_weight,
+                                   bags = total_bags,
+                                   VAT = VAT,
+                                   insurance = insurance,
+                                   amount = net_amount)
+        sale_invoice.save()
+
+        # Updating Product Data and  Sale Inovice Detail
+        num = 0
+        for _ in dict['product']:
+            # Product Data
+            product = Product.objects.get(name = _)
+            if request.POST['storage'] == str('Godown'):
+           
+                product.net_stock_processed = product.net_stock_processed - float(dict['weight'][num])
+                product.bags_processed = product.bags_processed + dict['bags'][num]
+                product.save()
+            else:
+                
+                product.stock_cold = product.stock_cold - float(dict['weight'][num])
+                product.bags_cold = product.bags_cold + dict['bags'][num]
+                product.save()
+
+            # Sale Invouce Detail
+            sale_invoice_detail = SaleInvoiceDetail(invoice = sale_invoice,
+                                                    product = product,
+                                                    weight = dict['weight'][num],
+                                                    bharti = dict['bharti'][num],
+                                                    rate = dict['rate'][num],
+                                                    bags = dict['bags'][num],
+                                                    amount = dict['amounts'][num],
+                                                    )
+            sale_invoice_detail.save()
+            num =num + 1
+        
+        
+        context_dict = {
+            "invoice_no": sale_invoice.invoice_no,
+            "name": request.POST['buyer'],
+            "commodity":request.POST['family'],
+            "products": dict['product'],
+            "weights": dict['weight'],
+            "bags": dict['bags'],
+            "rates": dict['rate'],
+            "amounts": dict['amounts'],
+            "net_loose_amount": net_loose_amount,
+            "insurance": insurance,
+            "VAT": VAT,
+            "net_amount": net_amount,
+            }
+        return render(request, 'partal/sale.html', context_dict)
+                    
+    else:
+        # Not a POST Request
+        context_dict = {"sale_form": sale_form,
+                        "sale_detail_form": sale_detail_form}
+
+        return render(request, 'partal/sale.html', context_dict)
+
+
+
+# Process Entry
+def process_entry(request):
+
+    context_dict = {}
+    process_entry_form = ProcessEntryForm()
+
+    if request.method == 'POST':
+
+        date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
+        product = Product.objects.get(name = request.POST['product'])
+        commodity = Commodity.objects.get(name = product.commodity.name)
+        
+        if product.net_stock_raw >= request.POST['weight_in'] and product.bags_raw >= request.POST['bags_in']:
+
+            # Saving Entry Data
+            new_entry = ProcessEntry(date = date,
+                                     product = product,
+                                     process = request.POST['process'],
+                                     weight_in = request.POST['weight_in'],
+                                     bags_in = request.POST['bags_in'],
+                                     weight_out = request.POST['weight_out'],
+                                     bags_out = request.POST['weight_out'],
+                                     storage = request.POST['storage'],
+                                     )
+            new_entry.save()
+            
+            # Updating Product
+            product.net_stock_raw = product.net_stock_raw - request.POST['weight_in']
+            product.bags_raw = product.bags_raw - request.POST['bags_in']
+            if request.POST['storage'] == str('Godown'):
+                product.net_stock_processed = product.net_stock_processed + request.POST['weight_out']
+                product.bags_processed = product.bags_processed + request.POST['bags_out']
+
+            else:
+                product.stock_cold = product.stock_cold + request.POST['weight_out']
+                product.bags_cold = product.bags_cold + request.POSt['bags_out']
+            product.save()
+            
+            # Updating Commodity
+            commodity.net_stock_raw = commodity.net_stock_raw - request.POST['weight_in']
+            commodity.bags_raw = commodity.bags_raw - request.POST['bags_in']
+            if request.POST['storage'] == str('Godown'):
+                commodity.net_stock_processed = commodity.net_stock_processed + request.POST['weight_out']
+                commodity.bags_processed = commodity.bags_processed + request.POST['bags_out']
+
+            else:
+                commodity.stock_cold = commodity.stock_cold + request.POST['weight_out']
+                commodity.bags_cold = commodity.bags_cold + request.POST['bags_out']
+            commodity.save()
+
+            process_entry_form = ProductEntryForm()
+            context_dict = {"message": "Entry Added",
+                            "process_entry_form": process_entry_form}
+            
+            return render(request, 'partal/process.html', context_dict)
+
+        else:
+            # Invalid Data
+            context_dict = {"message": "Raw stock is less"}
+            return render(request, 'partal/process.html', context_dict)
+
+    else:
+        # Not a POST Request
+        context_dict = {"process_entry_form": process_entry_form}
+
+        return render(request, 'partal/process.html', context_dict)
+
+
+        
+        

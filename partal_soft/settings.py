@@ -141,6 +141,7 @@ INSTALLED_APPS = (
     'reversion',
     'partal_soft',
     'partal',
+    'totalsum',
 )
 
 
