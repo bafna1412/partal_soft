@@ -222,7 +222,7 @@ def purchase_invoice(request):
         for _ in dict['weight']:
             bag = float(_)/float(dict['bharti'][b])
             
-            if bag % int(bag) >= 0.05:
+            if bag % int(bag) >= 0.125:
                 bag = int(bag) + 1
             else:
                 bag = int(bag)
