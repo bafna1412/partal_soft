@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block content %}  
+
+<div class="container">
+  
+  <strong>{{ message }}</strong><br />
+  <strong>{{ message1 }}</strong><br />
+
+  <form class="form-signin span4" id="purchase_form" method="post" action="/en/partal/saveinvoice/{{ date }}/{{ seller }}/">
+  
+      {% csrf_token %}
+
+      <!-- Display each form -->
+      {{ purchase_form.date.errors }}
+      {{ purchase_form.date.help_text }}<br />
+      {{ purchase_form.date }}<br />
+    
+      {{ purchase_form.seller.errors }}
+      {{ purchase_form.seller.help_text }}<br />
+      {{ purchase_form.seller }}<br />
+    
+      {{ purchase_form.seller_invoice_no.errors }}
+      {{ purchase_form.seller_invoice_no.help_text }}<br />
+      {{ purchase_form.seller_invoice_no }}<br />
+    
+      {{ purchase_form.family.errors }}
+      {{ purchase_form.family.help_text }}<br />
+      {{ purchase_form.family }}<br />
+    
+      {{ purchase_form.firm.errors }}
+      {{ purchase_form.firm.help_text }}<br />
+      {{ purchase_form.firm }}<br />
+    
+      {{ purchase_form.paid_with.errors }}
+      {{ purchase_form.paid_with.help_text }}<br />
+      {{ purchase_form.paid_with }}<br />
+      
+      <br />
+
+      <div class="multicolumn3 clearfix">
+	<div class="column" style="width: 20%; float: left;">	
+	  <strong>Quality</strong>
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <strong>No. of Bags</strong>
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	 <strong>Weight (Kg)</strong>
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <strong>Rate (per Qtl)</strong>
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <strong>Amount</strong>
+	</div>
+      </div>
+      <br />
+      <div class="multicolumn3 clearfix">
+	{% for entry in entries %}
+	<div class="column" style="width: 20%; float: left;">
+	  {{ entry.product.name }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <input type="number" class="per_bags" value="{{ entry.bags }}"><br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <input type ="number" class="per_weight" step="any" value="{{ entry.weight }}"><br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <input type="number" class="per_rate" value="{{ entry.rate }}"><br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <input type="number" class="per_amount" step="any" value="{{ entry.amount }}"><br />
+	</div>
+	<br />
+	<br />
+	{% endfor %}
+      </div>
+
+      <div class="multicolumn3 clearfix">
+	<div class="column" style="width: 20%; float: left;">	
+	  <br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.bags.errors }}
+	  {{ purchase_form.bags }}<br />
+	  {{ purchase_form.bags.help_text }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">
+	  {{ purchase_form.weight.errors }}
+	  {{ purchase_form.weight }}<br />
+	  {{ purchase_form.weight.help_text }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  <br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.net_loose_amount.errors }}
+	  {{ purchase_form.net_loose_amount }}<br />
+	  {{ purchase_form.net_loose_amount.help_text }}<br />
+	</div>
+      </div>
+      <br />
+      <div class="multicolumn3 clearfix">
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.commission.errors }}
+	  {{ purchase_form.commission.help_text }}<br />
+	  {{ purchase_form.commission }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.mandi_tax.errors }}
+	  {{ purchase_form.mandi_tax.help_text }}<br />
+	  {{ purchase_form.mandi_tax }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.association_charges.errors }}
+	  {{ purchase_form.association_charges.help_text }}<br />
+	  {{ purchase_form.association_charges }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.dharmada.errors }}
+	  {{ purchase_form.dharmada.help_text }}<br />
+	  {{ purchase_form.dharmada }}<br />
+	</div>
+      </div>
+
+      <p align = "right">
+	{{ purchase_form.net_gross_amount.errors }}
+	{{ purchase_form.net_gross_amount.help_text }}<br />
+	{{ purchase_form.net_gross_amount }}<br />
+      </p>
+      <div class="multicolumn3 clearfix">
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.VAT.errors }}
+	  {{ purchase_form.VAT.help_text }}<br />
+	  {{ purchase_form.VAT }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.muddat.errors }}
+	  {{ purchase_form.muddat.help_text }}<br />
+	  {{ purchase_form.muddat }}<br />
+	</div>
+	<div class="column" style="width: 20%; float: left;">	
+	  {{ purchase_form.TDS.errors }}
+	  {{ purchase_form.TDS.help_text }}<br />
+	  {{ purchase_form.TDS }}<br />
+	</div>
+      </div>
+      <br />
+      <p align = "right">
+	{{ purchase_form.amount.errors }}
+	{{ purchase_form.amount.help_text }}<br />
+	{{ purchase_form.amount }}<br />
+      </p>
+	
+      {{ purchase_form.narration.errors }}
+      {{ purchase_form.narration.help_text }}<br />
+      {{ purchase_form.narration }}<br />
+      <strong>Note:</strong> In case of paid bill for half. Add <strong>half with</strong> in narration.
+
+      <!-- Provide a click to submit the form -->
+      <p align = "center">
+	<input type = "submit" name = "submit" value = "Save" />
+      </p>
+  </form>
+
+  {% for entry in entries %}
+  <input type="hidden" class="original_rate" value="{{ entry.rate }}"><br />
+  {% endfor %}
+
+</div>
+
+<script src = "/static/js/jquery-2.1.1.js"></script>
+
+<script>
+  var b = $(".per_bags");
+  var w = $(".per_weight");
+  var r = $(".per_rate");
+  var a = $(".per_amount");
+  var s = $("#id_seller option:selected").text();
+  var f = $("#id_firm option:selected").text();
+  var list = {{ list|safe }};
+  var selected = list.filter(function(val){ return val.name === s });
+  var bags = 0;
+  var weight = [];
+  var weight_total = 0.0;
+  var rate = [];
+  var amount = [];
+  var loose_amount = 0.0
+  for (var i = 0; i<b.length; i++){
+			      bags += parseInt($(b[i]).val());
+			      weight_total += parseFloat($(w[i]).val());
+			      weight[i] = parseFloat($(w[i]).val());
+			      rate[i] = parseFloat($(r[i]).val());
+			      amount[i] = (weight[i]*rate[i])/100;
+			      $(a[i]).val(amount[i].toFixed(2));
+			      loose_amount += amount[i];
+			      }
+  
+  var commission = loose_amount*{{ charges.commission }}/100;
+  var mandi_tax = loose_amount*{{ charges.mandi_tax }}/100;
+  var association_charges = weight_total*{{ charges.association_charges }}/100;
+  var dharmada = weight_total*{{ charges.dharmada }}/100;
+  var gross_amount = loose_amount + commission + mandi_tax + association_charges + dharmada;
+  var vat = gross_amount*{{ charges.VAT }}/100;
+  var muddat = loose_amount*{{ charges.muddat }}/100;
+
+  var tds = 0.0;
+  if (selected[0][f] >= 5000 ){
+    tds = commission*{{ charges.TDS }}/100;
+    }
+  else{
+    if (selected[0][f] + commission >= 5000){
+    tds = (selected[0][f] + commission)*{{ charges.TDS }}/100;
+    }
+    else{
+    tds = 0.0;
+    }}
+
+var net_amount = gross_amount + vat - tds - muddat;  
+
+  $("#id_bags").val(bags);
+  $("#id_weight").val(weight_total);
+  $("#id_net_loose_amount").val(loose_amount.toFixed(2));
+  $("#id_commission").val(commission.toFixed(2));
+  $("#id_mandi_tax").val(mandi_tax.toFixed(2));
+  $("#id_association_charges").val(association_charges.toFixed(2));
+  $("#id_dharmada").val(dharmada.toFixed(2));
+  $("#id_net_gross_amount").val(gross_amount.toFixed(2));
+  $("#id_VAT").val(vat.toFixed(2));
+  $("#id_muddat").val(muddat.toFixed(2));
+  $("#id_TDS").val(tds.toFixed(2));
+  $("#id_amount").val(net_amount.toFixed(0));
+</script>
+
+<script>
+  $(".per_bags, .per_weight, .per_rate, #id_paid_with, .original_rate, #id_seller, #id_firm, #id_narration").change(function(){
+  var b = $(".per_bags");
+  var w = $(".per_weight");
+  var r = $(".per_rate");
+  var paid = $("#id_paid_with").val();
+  var s = $("#id_seller option:selected").text();
+  var f = $("#id_firm option:selected").text();
+  var list = {{ list|safe }};
+  var selected = list.filter(function(val){ return val.name === s });
+  var narration = $("#id_narration").val()
+  var bags = 0;
+  var weight = [];
+  var weight_total = 0.0;
+  var rate = [];
+  var original_rate = $(".original_rate");
+  var amount = [];
+  var loose_amount = 0.0;
+  for (var i = 0; i<b.length; i++){
+			      bags += parseInt($(b[i]).val());
+			      weight_total += parseFloat($(w[i]).val());
+			      weight[i] = parseFloat($(w[i]).val());
+			      if (paid > 0.0){
+                              $(r[i]).val(parseInt($(original_rate[i]).val()) + parseInt($(original_rate[i]).val()*paid/100));
+                              }
+			      rate[i] = parseFloat($(r[i]).val());
+			      amount[i] = (weight[i]*rate[i])/100;
+			      $(a[i]).val(amount[i].toFixed(2));
+			      loose_amount += amount[i];
+			      }
+
+  if (paid > 0.0){
+    var commission = 0.0;
+    var mandi_tax = 0.0;
+    var association_charges = 0.0;
+    var dharmada = 0.0;
+    }
+  else{
+    var commission = loose_amount*{{ charges.commission }}/100;
+    var mandi_tax = loose_amount*{{ charges.mandi_tax }}/100;
+    var association_charges = weight_total*{{ charges.association_charges }}/100;
+    var dharmada = weight_total*{{ charges.dharmada }}/100;
+    }
+
+  var gross_amount = loose_amount + commission + mandi_tax + association_charges + dharmada;
+  var vat = gross_amount*{{ charges.VAT }}/100;
+
+  var charges_muddat = 0.0;
+  if (paid > 0.0){
+    if (narration.indexOf("half with") > -1){
+    charges_muddat = {{ charges.muddat }};
+    }
+    else{
+    charges_muddat = 1.0;
+    }}
+  else{
+    charges_muddat = {{ charges.muddat }};
+    }
+  var muddat = loose_amount*charges_muddat/100;
+
+  var tds = 0.0;
+  if (paid > 0.0){
+    tds = 0.0;
+    }
+  else{
+    if (selected[0][f] >= 5000 ){
+    tds = commission*{{ charges.TDS }}/100;
+    }
+    else{
+    if (selected[0][f] + commission >= 5000){
+    tds = (selected[0][f] + commission)*{{ charges.TDS }}/100;
+    }
+    else{
+    tds = 0.0;
+    }}
+    }
+
+  var net_amount = gross_amount + vat - tds - muddat;  
+
+  $("#id_bags").val(bags);
+  $("#id_weight").val(weight_total);
+  $("#id_net_loose_amount").val(loose_amount.toFixed(2));
+  $("#id_commission").val(commission.toFixed(2));
+  $("#id_mandi_tax").val(mandi_tax.toFixed(2));
+  $("#id_association_charges").val(association_charges.toFixed(2));
+  $("#id_dharmada").val(dharmada.toFixed(2));
+  $("#id_net_gross_amount").val(gross_amount.toFixed(2));
+  $("#id_VAT").val(vat.toFixed(2));
+  $("#id_muddat").val(muddat.toFixed(2));
+  $("#id_TDS").val(tds.toFixed(2));
+  $("#id_amount").val(net_amount.toFixed(0));
+  })
+</script>
+{% endblock %}

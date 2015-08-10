@@ -4,8 +4,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 import datetime
 
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+
 from partal.models import *
 from partal.forms import *
+
+from django.db.models import Sum
 
 # Create your views here.
 
@@ -38,7 +43,12 @@ def index(request):
             return render(request, 'partal/index.html', context_dict)
 
     else:
-        return render(request, 'partal/index.html', context_dict)
+        #Redirecting already logged in user
+        if request.user.is_authenticated():
+            return HttpResponseRedirect('/partal/home/')
+        #If user is not logged in
+        else:
+            return render(request, 'partal/index.html', context_dict)
 
 
 # Home Page
@@ -195,6 +205,299 @@ def add_product(request):
         return render(request, 'partal/product.html', context_dict)
 
 
+# Purchase Detail Entry
+def purchase_detail(request):
+
+    purchase_detail_form = PurchaseDetailForm()
+    #Showing earlier entry data for the same date
+    history = PurchaseInvoiceDetail.objects.filter(date = datetime.date.today)
+    bags_total = history.aggregate(Sum('bags'))['bags__sum']
+    weight_total = history.aggregate(Sum('weight'))['weight__sum']
+        
+    context_dict = {"purchase_detail_form": purchase_detail_form,
+                    "histroy": history,
+                    "bags_total": bags_total,
+                    "weight_total": weight_total,
+                    }
+
+    if request.method == 'POST':
+
+        purchase_detail_form = PurchaseDetailForm(data = request.POST)
+
+        #Errors in the form
+        if not request.POST['weight'] or not request.POST['bags'] or not request.POST['rate'] or not request.POST['amount']:
+
+            #Showing earlier entry data for the same date
+            date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
+            history = PurchaseInvoiceDetail.objects.filter(date = date)
+            bags_total = history.aggregate(Sum('bags'))['bags__sum']
+            weight_total = history.aggregate(Sum('weight'))['weight__sum']
+        
+            context_dict = {"purchase_detail_form": purchase_detail_form,
+                            "history": history,
+                            "bags_total": bags_total,
+                            "weight_total": weight_total,
+                            }
+            
+        else:
+
+            #Getting all the data
+            date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
+            merchant = Firm.objects.filter(group = request.POST['seller'])
+            product = Product.objects.get(name = request.POST['product'])
+            weight = request.POST['weight']
+            bags = request.POST['bags']
+            rate = request.POST['rate']
+            amount = request.POST['amount']
+            rate_kg = float(rate)/100
+        
+            #Saving Purchase Detail
+            purchase_invoice_detail = PurchaseInvoiceDetail(date = date,
+                                                            seller = merchant[0],
+                                                            product = product,
+                                                            weight = weight,
+                                                            rate = rate,
+                                                            bags = bags,
+                                                            amount = amount
+                                                            )
+            purchase_invoice_detail.save()
+        
+            #Updating Daily Purchase
+            entries = DailyPurchase.objects.filter(date = date)
+        
+            #If no entry is found for the given date
+            if not entries:
+                entry = DailyPurchase(date = date,
+                                      product = product,
+                                      product_weight = weight,
+                                      product_bags = bags,
+                                      total_purchase_amount = amount,
+                                      rate = rate_kg
+                                      )
+            
+                entry.save()
+
+            #If some entry is present
+            else:
+                #Check if entry for particular product is present
+                try:
+                    entry = DailyPurchase.objects.get(date = date, product = product)
+                
+                except DailyPurchase.DoesNotExist:
+                
+                    entry = DailyPurchase(date = date,
+                                          product = product,
+                                          product_weight = weight,
+                                          product_bags = bags,
+                                          total_purchase_amount = amount,
+                                          rate = rate_kg
+                                          )
+                    entry.save()
+                
+                else:
+                    entry.product_weight += float(weight)
+                    entry.product_bags += int(bags)
+                    entry.total_purchase_amount += float(amount)
+                    entry.rate = entry.total_purchase_amount/entry.product_weight
+                    
+                    entry.save()
+      
+            #Updating Commodity quanity
+            commodity = Commodity.objects.get(name = product.commodity.name)
+            commodity.net_stock_raw += float(weight)
+            commodity.bags_raw += int(bags)
+            commodity.save()
+          
+            #Updating Product quanity
+            product.net_stock_raw += float(weight)
+            product.bags_raw += int(bags)
+            product.save()
+          
+            #Setting the entry date for further entries
+            purchase_detail_form = PurchaseDetailForm(initial = {'date': date},)
+            #Showing earlier entry data for the same date
+            history = PurchaseInvoiceDetail.objects.filter(date = date)
+            bags_total = history.aggregate(Sum('bags'))['bags__sum']
+            weight_total = history.aggregate(Sum('weight'))['weight__sum']
+        
+            context_dict = {"purchase_detail_form": purchase_detail_form,
+                            "history": history,
+                            "bags_total": bags_total,
+                            "weight_total": weight_total,
+                            }
+            
+        return render(request, 'partal/purchase.html', context_dict)
+
+    else:
+        #Not a post request
+        context_dict = {"purchase_detail_form": purchase_detail_form}
+
+        return render(request, 'partal/purchase.html', context_dict)
+
+                
+
+# Purhcase Invoice generation and entry
+def purchase_invoice(request):
+
+    context_dict = {}
+    date_form = DateForm()
+
+    if request.method == 'POST':
+
+        date_form = DateForm(data = request.POST)
+
+        if date_form.is_valid():
+
+            date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
+            date_form = DateForm(initial = {'date': date},)
+
+            #Fetching name of all the merchants from purchase details for this date
+            entries = PurchaseInvoiceDetail.objects.filter(date = date)
+
+            if not entries:
+                message = "No entries for this date"
+                
+                context_dict = {"message": message,
+                                "date": date,
+                                "date_form": date_form
+                                }
+
+            else:
+                sellers = entries.values_list('seller', flat = True).distinct()
+                count = len(sellers)
+                context_dict = {"sellers": sellers,
+                                "count": count,
+                                "date": date,
+                                "date_form": date_form
+                                }
+                
+            return render(request, 'partal/invoice.html', context_dict)
+        
+        else:
+            
+            # Errors in Form
+            context_dict = {"date_form": date_form}
+            return render(request, 'partal/invoice.html', context_dict)
+        
+    else:
+        #Not a post request
+        context_dict = {"date_form": date_form}
+
+        return render(request, 'partal/invoice.html', context_dict)
+
+
+
+# Saving Purchase Invoice
+def invoice_save(request, date, seller):
+
+    context_dict = {}
+    purchase_form = PurchaseForm()
+    list = []
+
+    #Retrieving list of prospective merchants
+    merchant = Firm.objects.get(name = seller)
+    purchase_form = PurchaseForm(initial = {'date': date,})
+    sellers = Firm.objects.filter(group = merchant.group)
+
+    #Making the query set for the form
+    purchase_form.fields['seller'].queryset = sellers
+    
+    #Entries of the seller selected
+    entries = PurchaseInvoiceDetail.objects.filter(seller = seller)
+    
+    #Getting all the extra charge rates
+    charges = RateDetail.objects.get(id = 1)
+
+    #Making seller commission list
+    for seller_name in sellers:
+        list.append({"name": seller_name.name, "APB": seller_name.net_commission_APB, "KY": seller_name.net_commission_KY})
+
+    list_json = json.dumps(list, cls=DjangoJSONEncoder)
+
+
+    if request.method == "POST":
+
+        purchase_form = PurchaseForm(data = request.POST)
+
+        #Check validity of data
+        if purchase_form.is_valid():
+
+            try:
+                
+                #Check if entry already present
+                entry = PurchaseInvoice.objects.get(date = date, seller = request.POST['seller'])
+
+            except PurchaseInvoice.DoesNotExist:
+                
+                #If no duplicate entry. Saving the entry
+                purchase = purchase_form.save()
+
+                #Updating Firm Record
+                firm = Firm.objects.get(name = request.POST['seller'])
+
+                firm.net_purchase_weight += float(request.POST['weight'])
+                firm.net_purchase_amount += int(request.POST['amount'])
+
+                if request.POST['firm'] == "APB":
+                    firm.net_commission_APB += float(request.POST['commission'])
+                if request.POST['firm'] == "KY":
+                    firm.net_commission_KY += float(request.POST['commission'])
+                
+                firm.save()
+                return HttpResponse('<script type="text/javascript">window.close()</script>')
+                #context_dict = {"message": "Purchase Invoice Saved"}
+            
+            else:
+                #Duplicate entry exists
+
+                #Making the query set for the form
+                purchase_form.fields['seller'].queryset = sellers
+    
+                context_dict = {"message": "Entry for this Seller for this date already exists.",
+                                "message1": "If you wish to rewrite this entry then please delete the old record first.",
+                                "date": date,
+                                "seller": seller,
+                                "purchase_form": purchase_form,
+                                "entries": entries,
+                                "list": list_json,
+                                "charges": charges,
+                                }
+
+        # Errors in Form
+        else:
+
+            #Making the query set for the form
+            purchase_form.fields['seller'].queryset = sellers
+    
+            #Return errors
+            context_dict = {"date": date,
+                            "seller": seller,
+                            "purchase_form": purchase_form,
+                            "entries": entries,
+                            "list": list_json,
+                            "charges": charges,
+                            }
+            print entries
+
+
+                
+        return render(request, 'partal/saveinvoice.html', context_dict)
+
+
+    else:
+
+        context_dict = {"date": date,
+                        "seller": seller,
+                        "purchase_form": purchase_form,
+                        "entries": entries,
+                        "list": list_json,
+                        "charges": charges,
+                        }
+        
+        return render(request, 'partal/saveinvoice.html', context_dict)
+
+
+"""
 # Purchase Invoice Entry
 def purchase_invoice(request):
 
@@ -472,7 +775,7 @@ def purchase_invoice(request):
                         "purchase_detail_form": purchase_detail_form}
 
         return render(request, 'partal/purchase.html', context_dict)
-
+"""
 
 # Sale Invoice
 def sale_invoice(request):

@@ -188,5 +188,5 @@ CMS_PLACEHOLDER_CONF = {}
 
 DATABASES = {
     'default':
-        {'ENGINE': 'django.db.backends.postgresql_psycopg2', 'NAME': u'partaldb', 'HOST': u'localhost', 'USER': u'sidharth', 'PASSWORD': '', 'PORT': ''}
+        {'ENGINE': 'django.db.backends.mysql', 'NAME': u'accountsdb', 'HOST': u'localhost', 'USER': u'manager', 'PASSWORD': '123456', 'PORT': '3306'}
 }

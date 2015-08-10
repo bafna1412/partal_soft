@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}  
+
+<div class = "container">
+
+  <p align="right">
+    <a href="/partal/purchase/">Back to Purchase Detail</a>
+  </p>
+
+  <form class = "form-signin span4" id="date_form" method= "post" action= "/en/partal/invoice/">
+    <h2 class = "form-signin-heading">Purchase Invoice Generation</h2>
+    {% csrf_token %}
+
+    <!-- Display Date form -->
+    {% for field in date_form.visible_fields %}
+    {{ field.errors }}
+    {{ field.help_text }}<br />
+    {{ field }}<br />
+    {% endfor %}
+    <br />
+    <!-- Provide a click to submit the form -->
+    <input type = "submit" name = "submit" value = "Submit" />
+  </form>
+  <br />
+  <strong>{{ message }}</strong>
+  <br />
+  <div class="multicolumn3 clearfix">
+    {% for seller in sellers %}
+    <a href="/partal/saveinvoice/{{ date }}/{{ seller }}/" onclick="return popitup('/partal/saveinvoice/{{ date }}/{{ seller }}/')">{{ seller }}</a><br /> 
+    {% endfor %}
+    <br />
+  </div>
+  <p align="right">
+    <strong>Total Bills: </strong> {{ count }}
+  </p>
+</div>
+
+<script language="javascript" type="text/javascript">
+
+function popitup(url) {
+    newwindow=window.open(url,'{{title}}','height=700,width=1200');
+    if (window.focus) {newwindow.focus()}
+    return false;
+}
+
+</script>
+
+{% endblock %}
+
+

@@ -12,6 +12,7 @@ class User(models.Model):
 class Firm(models.Model):
     
     name = models.CharField(unique = True, primary_key = True, max_length = 100)
+    group = models.CharField(max_length = 10, default = "None")
     address = models.TextField()
     contact_number = models.CharField(max_length = 11)
     PAN = models.CharField(max_length = 10)
@@ -22,6 +23,10 @@ class Firm(models.Model):
     net_purchase_amount = models.PositiveIntegerField(default = 0)
     monthly_TDS_APB = models.FloatField(default = 0.0)
     monthly_TDS_KY = models.FloatField(default = 0.0)
+
+    def __unicode__(self):
+        
+        return u'{0}'.format(self.name)
 
 
 class Client(models.Model):
@@ -46,7 +51,12 @@ class Commodity(models.Model):
     bags_cold = models.PositiveIntegerField(default = 0)
     avg_price_raw = models.PositiveIntegerField(default = 0)
     avg_price_processed = models.PositiveIntegerField(default = 0)
-    
+
+    def __unicode__(self):
+        
+        return u'{0}'.format(self.name)
+
+
 
 class Product(models.Model):
     
@@ -61,6 +71,10 @@ class Product(models.Model):
     avg_price_raw = models.PositiveIntegerField(default = 0)
     avg_price_processed = models.PositiveIntegerField(default = 0)
     
+    def __unicode__(self):
+        
+        return u'{0}'.format(self.name)
+
     def family(self):
 
         return self.commodity.name
@@ -83,6 +97,7 @@ class PurchaseInvoice(models.Model):
     seller = models.ForeignKey(Firm)
     seller_invoice_no = models.CharField(max_length = 10, default = "None")
     family = models.ForeignKey(Commodity)
+    firm = models.CharField(max_length = 10, default = "None")
     weight = models.FloatField(default = 0.0)
     bags = models.PositiveIntegerField(default = 0)
     net_loose_amount = models.FloatField(default = 0.0)
@@ -94,6 +109,7 @@ class PurchaseInvoice(models.Model):
     VAT = models.FloatField()
     TDS = models.FloatField()
     amount = models.PositiveIntegerField()
+    narration = models.TextField(default = "None")
 
     def merchant(self):
 
@@ -106,20 +122,15 @@ class PurchaseInvoice(models.Model):
 
 class PurchaseInvoiceDetail(models.Model):
 
-    invoice = models.ForeignKey(PurchaseInvoice) 
+
+    date = models.DateField(default = datetime.date.today())
+    seller = models.ForeignKey(Firm)
     product = models.ForeignKey(Product)
     weight = models.FloatField(default = 0.0)
-    bharti = models.PositiveIntegerField(max_length = 2, default = 0)
     rate = models.PositiveIntegerField(max_length = 5, default = 0)
     bags = models.PositiveIntegerField(default = 0)
     amount = models.FloatField()
 
-    def invoice_no(self):
-
-        return self.invoice.id
-
-    def date(self):
-        return self.invoice.date
 
     def product_type(self):
 
@@ -127,7 +138,7 @@ class PurchaseInvoiceDetail(models.Model):
 
     def merchant(self):
 
-        return self.invoice.seller.name
+        return self.seller.group
 
 
 class DailyPurchase(models.Model):
@@ -171,7 +182,6 @@ class SaleInvoiceDetail(models.Model):
     invoice = models.ForeignKey(SaleInvoice) 
     product = models.ForeignKey(Product)
     weight = models.FloatField(default = 0.0)
-    bharti = models.PositiveIntegerField(max_length = 2, default = 0)
     rate = models.PositiveIntegerField(max_length = 5, default = 0)
     bags = models.PositiveIntegerField(default = 0)
     amount = models.FloatField()

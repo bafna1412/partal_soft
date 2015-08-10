@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'SaleInvoice.storage'
-        db.add_column(u'partal_saleinvoice', 'storage',
-                      self.gf('django.db.models.fields.CharField')(default='None', max_length=25),
+        # Adding field 'PurchaseInvoice.firm'
+        db.add_column(u'partal_purchaseinvoice', 'firm',
+                      self.gf('django.db.models.fields.CharField')(default='None', max_length=10),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'SaleInvoice.storage'
-        db.delete_column(u'partal_saleinvoice', 'storage')
+        # Deleting field 'PurchaseInvoice.firm'
+        db.delete_column(u'partal_purchaseinvoice', 'firm')
 
 
     models = {
@@ -80,11 +80,12 @@ class Migration(SchemaMigration):
         },
         u'partal.dailypurchase': {
             'Meta': {'object_name': 'DailyPurchase'},
-            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 4, 5, 0, 0)'}),
+            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 8, 2, 0, 0)'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Product']"}),
             'product_bags': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'product_weight': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
+            'rate': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
             'total_purchase_amount': ('django.db.models.fields.FloatField', [], {'default': '0.0'})
         },
         u'partal.firm': {
@@ -93,9 +94,12 @@ class Migration(SchemaMigration):
             'TIN': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '11'}),
             'address': ('django.db.models.fields.TextField', [], {}),
             'contact_number': ('django.db.models.fields.CharField', [], {'max_length': '11'}),
-            'monthly_tds': ('django.db.models.fields.FloatField', [], {'default': '0'}),
+            'group': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '10'}),
+            'monthly_TDS_APB': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
+            'monthly_TDS_KY': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'primary_key': 'True'}),
-            'net_commission': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
+            'net_commission_APB': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
+            'net_commission_KY': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
             'net_purchase_amount': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'net_purchase_weight': ('django.db.models.fields.FloatField', [], {'default': '0.0'})
         },
@@ -103,7 +107,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ProcessEntry'},
             'bags_in': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'bags_out': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 4, 5, 0, 0)'}),
+            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 8, 2, 0, 0)'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'process': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '100'}),
             'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Product']"}),
@@ -132,12 +136,15 @@ class Migration(SchemaMigration):
             'association_charges': ('django.db.models.fields.FloatField', [], {}),
             'bags': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'commission': ('django.db.models.fields.FloatField', [], {}),
-            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 4, 5, 0, 0)'}),
+            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 8, 2, 0, 0)'}),
             'dharmada': ('django.db.models.fields.FloatField', [], {}),
             'family': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Commodity']"}),
+            'firm': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '10'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'mandi_tax': ('django.db.models.fields.FloatField', [], {}),
             'muddat': ('django.db.models.fields.FloatField', [], {}),
+            'narration': ('django.db.models.fields.TextField', [], {'default': "'None'"}),
+            'net_loose_amount': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
             'seller': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Firm']"}),
             'seller_invoice_no': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '10'}),
             'weight': ('django.db.models.fields.FloatField', [], {'default': '0.0'})
@@ -146,11 +153,11 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'PurchaseInvoiceDetail'},
             'amount': ('django.db.models.fields.FloatField', [], {}),
             'bags': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'bharti': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'max_length': '2'}),
+            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 8, 2, 0, 0)'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.PurchaseInvoice']"}),
             'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Product']"}),
             'rate': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'max_length': '5'}),
+            'seller': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Firm']"}),
             'weight': ('django.db.models.fields.FloatField', [], {'default': '0.0'})
         },
         u'partal.ratedetail': {
@@ -171,7 +178,7 @@ class Migration(SchemaMigration):
             'amount': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'bags': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'buyer': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Client']"}),
-            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 4, 5, 0, 0)'}),
+            'date': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2015, 8, 2, 0, 0)'}),
             'family': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Commodity']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'insurance': ('django.db.models.fields.FloatField', [], {}),
@@ -183,7 +190,6 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'SaleInvoiceDetail'},
             'amount': ('django.db.models.fields.FloatField', [], {}),
             'bags': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'bharti': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'max_length': '2'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.SaleInvoice']"}),
             'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['partal.Product']"}),
