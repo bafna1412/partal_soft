@@ -39,6 +39,11 @@ class Client(models.Model):
     net_sale_weight = models.FloatField(default = 0.0)
     net_sale_amount = models.PositiveIntegerField(default = 0)
     
+    def __unicode__(self):
+        
+        return u'{0}'.format(self.name)
+
+
 
 class Commodity(models.Model):
     
@@ -91,6 +96,7 @@ class RateDetail(models.Model):
     TDS = models.FloatField()
     insurance = models.FloatField(default = 0.0)
     
+
 class PurchaseInvoice(models.Model):
     
     date = models.DateField(default = datetime.date.today())

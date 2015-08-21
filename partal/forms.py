@@ -59,7 +59,7 @@ class ProductForm(forms.ModelForm):
 
 
 class PurchaseForm(forms.ModelForm):
-
+    
     date = forms.DateField(help_text = "Invoice Date", initial = datetime.date.today, required = True,
                            widget = SelectDateWidget)
     
@@ -143,14 +143,24 @@ class PurchaseDetailForm(forms.ModelForm):
         fields = ('date', 'seller', 'product', 'weight', 'bags', 'rate', 'amount')
 
 
-class DateForm(forms.ModelForm):
+class DateForm(forms.Form):
 
     date = forms.DateField(help_text = "Purchase Invoice Date", initial = datetime.date.today, required = True,
                            widget = SelectDateWidget)
-    class Meta:
+    
 
-        model = PurchaseInvoice
-        fields = ('date',)
+
+class SaleEstimateForm(forms.Form):
+
+    start_date = forms.DateField(help_text = "From", initial = datetime.date.today, required = True,
+                                 widget = SelectDateWidget)
+    
+    end_date = forms.DateField(help_text = "To", initial = datetime.date.today, required = True,
+                                 widget = SelectDateWidget)
+    
+    product =  forms.ModelChoiceField(help_text = "Product", required = True,
+                                      queryset = Product.objects.all(), empty_label = None)
+    
 
 
 class SaleForm(forms.ModelForm):

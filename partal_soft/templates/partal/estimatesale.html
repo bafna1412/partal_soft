@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class = "container">
+
+  <form class = "form-signin span4" id="sale_estimate_form" method= "post" action= "/en/partal/estimatesale/">
+    <h2 class = "form-signin-heading">Sale Estimate</h2>
+    {% csrf_token %}
+
+    <!-- Display Estimate Form -->
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">	
+	{{ sale_estimate_form.start_date.help_text }}<br />              
+	{{ sale_estimate_form.start_date }}<br />         
+	{{ sale_estimate_form.start_date.errors }}   
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ sale_estimate_form.end_date.help_text }}<br />
+	{{ sale_estimate_form.end_date }}<br />
+	{{ sale_estimate_form.end_date.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ sale_estimate_form.product.help_text }}<br />
+	{{ sale_estimate_form.product }}<br />
+	{{ sale_estimate_form.product.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	<!-- Provide a click to submit the form -->
+	<br />
+	<input type = "submit" name = "submit" value = "Submit" />
+      </div>
+    </div>
+  </form>
+
+  <br />
+
+  <form target="_blank" class="form-signin span4" id="output_pdf_form" method="post" action="/en/partal/outputpdf/">
+    {% csrf_token %}
+    <strong>Client:</strong> <input type="text" size="50" name="name" required><br />
+    <br />
+    <strong>Date:</strong> <input type="text" size="15" name="date" required><br />
+    <br />
+    <strong>Quality:</strong> <input type="text" size="15" name="quality" value="{{ data.0.product }}" required><br />
+    <table id="dataTable" width="1000px">
+      <tbody>
+	<!-- Display data -->
+	<div class="multicolumn3 clearfix">
+	  <div class="column" style="width: 20%; float: left;">	
+	    <td></td>
+	  </div>
+	  <div class="column" style="width: 20%; float: left;">	
+	    <td><strong>Date</strong></td>
+	  </div>
+	  <div class="column" style="width: 20%; float: left;">	
+	    <td><strong>Bags</strong></td>
+	  </div>
+	  <div class="column" style="width: 20%; float: left;">	
+	    <td><strong>Weight</strong></td>
+	  </div>
+	  <div class="column" style="width: 20%; float: left;">	
+	    <td><strong>Rate</strong></td>
+	  </div>
+	  <div class="column" style="width: 20%; float: left;">	
+	    <td><strong>Amount</strong></td>
+	  </div>
+	  
+	</div>
+	<br />
+	
+	<div class="multicolumn3 clearfix">
+	  {% for entry in data %}
+	  <tr>
+	    <div class="column" style="width: 20%; float: left;">
+	      <td><input type="checkbox" name="chk"></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">
+	      <td>{{ entry.date }}</td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type="number" class="per_bags" name="bags" value="{{ entry.bags }}"></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type ="number" class="per_weight" step="any" name="weight" value="{{ entry.weight }}"></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type="number" class="per_rate" name="rate" value="{{ entry.rate }}"></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type="number" class="per_amount" step="any" name="amount" value="{{ entry.amount }}"></td>
+	    </div>
+	  </tr>
+	</div>
+	{% endfor %}
+	<tr><td></td></tr>
+	<tr><td></td></tr>
+	<tr>
+	  <div class="multicolumn3 clearfix">
+	    <div class="column" style="width: 20%; float: left;">
+	      <td></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">
+	      <td><strong>Total</strong></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type="number" id="total_bags" name="bags_total" value=""></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type="number" id="total_weight" step="any" name="weight_total" value=""></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">
+	      <td></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type="number" id="total_amount" step="any" name="amount_total" value=""></td>
+	    </div>
+	    <div class="column" style="width: 20%; float: left;">	
+	      <td><input type="submit" name="submit" value="Sale Estimate" /></td>
+	    </div>
+	  </div>
+	</tr>
+    </tbody></table>
+  </form>
+  
+  <p align = "right">
+    <input type="button" value="Delete Row" onclick="deleteRow('dataTable');calc_function()">
+  </p>
+  <br />
+  
+</div>
+
+<script language="javascript">function addRow(tableID){var table=document.getElementById(tableID);var rowCount=table.rows.length;var row=table.insertRow(rowCount);var colCount=table.rows[0].cells.length;for(var i=0;i<colCount;i++){var newcell=row.insertCell(i);newcell.innerHTML=table.rows[0].cells[i].innerHTML;switch(newcell.childNodes[0].type){case"text":newcell.childNodes[0].value="";break;case"checkbox":newcell.childNodes[0].checked=false;break;case"select-one":newcell.childNodes[0].selectedIndex=0;break;}}}
+function deleteRow(tableID){try{var table=document.getElementById(tableID);var rowCount=table.rows.length;for(var i=0;i<rowCount;i++){var row=table.rows[i];var chkbox=row.cells[0].childNodes[0];if(null!=chkbox&&true==chkbox.checked){if(rowCount<=1){alert("Cannot delete all the rows.");break;}
+table.deleteRow(i);rowCount--;i--;}}}catch(e){alert(e);}}</script>
+
+<script src = "/static/js/jquery-2.1.1.js"></script>
+
+<script>
+  function calc_function(){
+  var b = $(".per_bags");
+  var w = $(".per_weight");
+  var a = $(".per_amount");
+  var r = $(".per_rate");
+  var weight = [];
+  var rate = [];
+  var amount = [];
+  var bags_total = 0;
+  var weight_total = 0.0;
+  var amount_total = 0.0;
+
+  for (var i = 0; i<b.length; i++){
+			      weight[i] = parseFloat($(w[i]).val());
+			      rate[i] = parseFloat($(r[i]).val());
+			      amount[i] = weight[i]*rate[i]/100;
+			      $(a[i]).val(amount[i].toFixed(2));
+			      bags_total += parseInt($(b[i]).val());
+			      weight_total += parseFloat($(w[i]).val());
+			      amount_total += parseFloat($(a[i]).val());
+			      }
+
+  $("#total_bags").val(bags_total);
+  $("#total_weight").val(weight_total);
+  $("#total_amount").val(amount_total.toFixed(2));
+  }
+</script>
+
+<script>
+  calc_function();
+</script>
+
+<script>
+  $(".per_bags, .per_weight, .per_rate, .per_amount").change(function(){
+  calc_function();
+  })
+</script>
+
+{% endblock %}

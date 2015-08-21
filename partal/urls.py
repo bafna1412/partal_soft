@@ -13,6 +13,8 @@ urlpatterns = patterns('',
                        url(r'^purchase/$', views.purchase_detail, name = 'purchase'),
                        url(r'^invoice/$', views.purchase_invoice, name = 'invoice'),
                        url(r'^saveinvoice/(?P<date>[0-9_-]+)/(?P<seller>[\w&  ]+)/$', views.invoice_save, name = 'saveinvoice'),
+                       url(r'^estimatesale/$', views.sale_estimate, name = 'estimatesale'),
+                       url(r'^outputpdf/$', views.output_pdf, name = 'outputpdf'),
                        url(r'^process/$', views.process_entry, name = 'process'),
                        url(r'^sale/$', views.sale_invoice, name = 'sale'),
                        )
