@@ -56,39 +56,48 @@
   <br />
 
   <div class="multicolumn3 clearfix">
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       <strong>Firm Group</strong>
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       <strong>Product</strong>
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       <strong>Bags</strong>
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       <strong>Weight</strong>
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       <strong>Rate</strong>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <strong>Amount</strong>
     </div>
   </div>
 
   {% for obj in history %}
   <div class="multicolumn3 clearfix">
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       {{ obj.seller.group }}<br />
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       {{ obj.product }}<br />
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       {{ obj.bags }}<br />
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       {{ obj.weight }}<br />
     </div>
-    <div class="column" style="width: 20%; float: left;">	
+    <div class="column" style="width: 14%; float: left;">	
       {{ obj.rate }}<br />
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      {{ obj.amount }}<br />
+    </div>
+    <div class="column" style="width: 14%; float: left">
+      <a href="/partal/delete_purchase/{{ obj.id }}/">delete</a><br />
     </div>
   </div>
   {% endfor %}
@@ -105,7 +114,7 @@
   var weight = $("#id_weight").val();
   var rate = $("#id_rate").val()
   var amount = (weight*rate)/100;
-  $("#id_amount").val(amount);
+  $("#id_amount").val(amount.toFixed(2));
   })
 </script>
 

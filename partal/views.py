@@ -10,7 +10,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from partal.models import *
 from partal.forms import *
 
-from django.db.models import Sum
+from django.db.models import Sum, Q
 
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -214,18 +214,19 @@ def add_product(request):
         return render(request, 'partal/product.html', context_dict)
 
 
+
 # Purchase Detail Entry
 @login_required
 def purchase_detail(request):
 
     purchase_detail_form = PurchaseDetailForm()
     #Showing earlier entry data for the same date
-    history = PurchaseInvoiceDetail.objects.filter(date = datetime.date.today)
+    history = PurchaseInvoiceDetail.objects.filter(date = datetime.date.today())
     bags_total = history.aggregate(Sum('bags'))['bags__sum']
     weight_total = history.aggregate(Sum('weight'))['weight__sum']
         
     context_dict = {"purchase_detail_form": purchase_detail_form,
-                    "histroy": history,
+                    "history": history,
                     "bags_total": bags_total,
                     "weight_total": weight_total,
                     }
@@ -340,12 +341,68 @@ def purchase_detail(request):
 
     else:
         #Not a post request
-        context_dict = {"purchase_detail_form": purchase_detail_form}
+        #context_dict = {"purchase_detail_form": purchase_detail_form}
 
         return render(request, 'partal/purchase.html', context_dict)
 
-                
 
+
+# Delete Purchase detail
+@login_required
+def purchase_delete(request, entry_id):
+
+    #Fetch the entry to be deleted
+    entry = PurchaseInvoiceDetail.objects.get(id = entry_id)
+    firms = Firm.objects.filter(group = entry.seller.group)
+    entries = []
+
+    # Check date of entry. Only current date entries can be deleted
+    for firm in firms:
+        
+        invoices = PurchaseInvoice.objects.filter(date = entry.date, seller = firm.name)
+        if invoices:
+            entries.append(invoices)
+
+    # Make changes only if invoice is not made
+    if not entries:
+        
+        #Make changes to daily purchase
+        daily_purchase = DailyPurchase.objects.get(date = entry.date, product = entry.product)
+
+        daily_purchase.product_weight -= float(entry.weight)
+        daily_purchase.product_bags -= int(entry.bags)
+        daily_purchase.total_purchase_amount -= float(entry.amount)
+        if daily_purchase.product_weight == 0.0:
+           daily_purchase.rate = 0.0 
+        else:
+            daily_purchase.rate = daily_purchase.total_purchase_amount/daily_purchase.product_weight
+        
+        daily_purchase.save()
+
+        #Make changes to Product quantity
+        product = Product.objects.get(name = entry.product)
+
+        product.net_stock_raw -= float(entry.weight)
+        product.bags_raw -= int(entry.bags)
+
+        product.save()
+
+        #Make changes to Commodity quantity
+        commodity = Commodity.objects.get(name = product.commodity.name)
+
+        commodity.net_stock_raw -= float(entry.weight)
+        commodity.bags_raw -= int(entry.bags)
+
+        commodity.save()
+
+        #Delete the purchase detail entry
+        entry.delete()
+
+    return HttpResponseRedirect('/partal/purchase/')
+          
+        
+          
+        
 # Purhcase Invoice generation and entry
 @login_required
 def purchase_invoice(request):
@@ -437,8 +494,9 @@ def invoice_save(request, date, seller):
             try:
                 
                 #Check if entry already present
-                entry = PurchaseInvoice.objects.get(date = date, seller = request.POST['seller'])
-
+                print request.POST['paid_with']
+                entry = PurchaseInvoice.objects.get(date = date, seller = request.POST['seller'], paid_with = request.POST['paid_with'])
+                
             except PurchaseInvoice.DoesNotExist:
                 
                 #If no duplicate entry. Saving the entry
@@ -509,6 +567,7 @@ def invoice_save(request, date, seller):
         return render(request, 'partal/saveinvoice.html', context_dict)
 
 
+    
 # Sale Estimate
 @login_required
 def sale_estimate(request):
@@ -540,6 +599,7 @@ def sale_estimate(request):
             context_dict = {"sale_estimate_form": sale_estimate_form}
 
     return render(request, 'partal/estimatesale.html', context_dict)
+
 
 
 # Print pdf option
@@ -618,6 +678,7 @@ def output_pdf(request):
         doc.build(elements) 
 
         return response
+
 
 
 # Sale Invoice

@@ -24,7 +24,7 @@ class FirmForm(forms.ModelForm):
     name = forms.CharField(help_text = "Firm Name", required = True, max_length = 100)
     group = forms.CharField(help_text = "Firm Group", required = True, max_length = 10)
     address = forms.CharField(help_text = "Address of Firm", required = True, widget = forms.Textarea)
-    contact_number = forms.CharField(help_text = "Contact Number", required = True)
+    contact_number = forms.CharField(help_text = "Contact Number", required = True, max_length = 11)
     PAN = forms.CharField(help_text = "PAN Number", max_length = 10)
     TIN = forms.CharField(help_text = "TIN Number", required = True, max_length = 11)
     
@@ -50,7 +50,7 @@ class ProductForm(forms.ModelForm):
     name = forms.CharField(help_text = "Product Name", required = True, max_length = 20)
     
     family = forms.ModelChoiceField(help_text = "Commodity Type", required = True,
-                                    queryset = Commodity.objects.values_list('name', flat=True))
+                                    queryset = Commodity.objects.values_list('name', flat=True), empty_label = None)
     
     class Meta:
 
@@ -75,7 +75,7 @@ class PurchaseForm(forms.ModelForm):
                                    choices = FIRM_CHOICES)
     
     paid_with = forms.FloatField(help_text = "Paid With", required = False,
-                                 min_value = 0.0)
+                                 min_value = 0.0, initial = 0.0)
 
     weight = forms.FloatField(help_text = "Total Weight", required = True, min_value = 0.0)
 
@@ -111,7 +111,7 @@ class PurchaseForm(forms.ModelForm):
 
         model = PurchaseInvoice
 
-        fields = ('date', 'seller', 'seller_invoice_no', 'family', 'firm', 'weight',
+        fields = ('date', 'seller', 'seller_invoice_no', 'family', 'firm', 'paid_with',  'weight',
                   'bags', 'net_loose_amount', 'commission', 'mandi_tax', 'association_charges',
                   'dharmada', 'VAT', 'muddat', 'TDS', 'amount', 'narration')
 

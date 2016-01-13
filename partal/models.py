@@ -104,6 +104,7 @@ class PurchaseInvoice(models.Model):
     seller_invoice_no = models.CharField(max_length = 10, default = "None")
     family = models.ForeignKey(Commodity)
     firm = models.CharField(max_length = 10, default = "None")
+    paid_with = models.FloatField(default = 0.0)
     weight = models.FloatField(default = 0.0)
     bags = models.PositiveIntegerField(default = 0)
     net_loose_amount = models.FloatField(default = 0.0)
