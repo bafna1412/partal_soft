@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class = "container">
+
+  <form class = "form-signin span4" id="tds_view_form" method= "post" action= "/en/partal/viewtds/">
+    <h2 class = "form-signin-heading">TDS</h2>
+    {% csrf_token %}
+
+    <!-- Display TDS Form -->
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">	
+	{{ tds_view_form.start_date.help_text }}<br />              
+	{{ tds_view_form.start_date }}<br />         
+	{{ tds_view_form.start_date.errors }}   
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ tds_view_form.end_date.help_text }}<br />
+	{{ tds_view_form.end_date }}<br />
+	{{ tds_view_form.end_date.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	<!-- Provide a click to submit the form -->
+	<br />
+	<input type = "submit" name = "submit" value = "Submit" />
+      </div>
+    </div>
+  </form>
+
+  <br />
+
+  {% if data %}
+  <div class="multicolumn3 clearfix">
+    <div class="column" style="width: 20%; float: left;">	
+      <td><strong>Firm</strong></td>
+    </div>
+    <div class="column" style="width: 20%; float: left;">	
+      <td><strong>Commission APB</strong></td>
+    </div>
+    <div class="column" style="width: 20%; float: left;">	
+      <td><strong>TDS APB</strong></td>
+    </div>
+    <div class="column" style="width: 20%; float: left;">	
+      <td><strong>Commission KY</strong></td>
+    </div>
+    <div class="column" style="width: 20%; float: left;">	
+      <td><strong>TDS KY</strong></td>
+    </div>
+  </div>
+
+  <br />
+
+  <div class="multicolumn3 clearfix">
+    {% for entry in data %}
+    {{ entry }}
+    {% endfor %}
+  </div>
+
+</div>
+
+{% endblock %}

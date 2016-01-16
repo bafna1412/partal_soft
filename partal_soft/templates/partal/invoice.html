@@ -31,9 +31,13 @@
     {% endfor %}
     <br />
   </div>
+  {% if count %}
   <p align="right">
     <strong>Total Bills: </strong> {{ count }}
   </p>
+  {% else %}
+  <strong>No purchase entries for selected date.</strong>
+  {% endif %}
 </div>
 
 <script language="javascript" type="text/javascript">

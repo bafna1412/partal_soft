@@ -55,6 +55,7 @@
 
   <br />
 
+  {% if history %}
   <div class="multicolumn3 clearfix">
     <div class="column" style="width: 14%; float: left;">	
       <strong>Firm Group</strong>
@@ -104,7 +105,7 @@
   <br />
   <strong>Total Bags: </strong> {{ bags_total }}<br />
   <strong>Total Weight: </strong> {{ weight_total }}
-  
+  {% endif %}
 </div>
 
 <script src = "/static/js/jquery-2.1.1.js"></script>

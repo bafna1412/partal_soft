@@ -12,95 +12,117 @@
       {% csrf_token %}
 
       <!-- Display each form -->
-      {{ purchase_form.date.errors }}
       {{ purchase_form.date.help_text }}<br />
-      {{ purchase_form.date }}<br />
+      {{ purchase_form.date }}
+      {{ purchase_form.date.errors }}<br />
     
-      {{ purchase_form.seller.errors }}
       {{ purchase_form.seller.help_text }}<br />
-      {{ purchase_form.seller }}<br />
-    
-      {{ purchase_form.seller_invoice_no.errors }}
-      {{ purchase_form.seller_invoice_no.help_text }}<br />
-      {{ purchase_form.seller_invoice_no }}<br />
-    
-      {{ purchase_form.family.errors }}
-      {{ purchase_form.family.help_text }}<br />
-      {{ purchase_form.family }}<br />
-    
-      {{ purchase_form.firm.errors }}
-      {{ purchase_form.firm.help_text }}<br />
-      {{ purchase_form.firm }}<br />
-    
-      {{ purchase_form.paid_with.errors }}
-      {{ purchase_form.paid_with.help_text }}<br />
-      {{ purchase_form.paid_with }}<br />
+      {{ purchase_form.seller }}
+      {{ purchase_form.seller.errors }}<br />
       
+      {{ purchase_form.seller_invoice_no.help_text }}<br />
+      {{ purchase_form.seller_invoice_no }}
+      {{ purchase_form.seller_invoice_no.errors }}<br />
+    
+      {{ purchase_form.family.help_text }}<br />
+      {{ purchase_form.family }}
+      {{ purchase_form.family.errors }}<br />
+      
+      {{ purchase_form.firm.help_text }}<br />
+      {{ purchase_form.firm }}
+      {{ purchase_form.firm.errors }}<br />
+      
+      {{ purchase_form.paid_with.help_text }}
+      <strong>
+	(Caution! Once changed, setting it back it 0 will give you wrong result.
+	Please make sure bill is paid before using this.)
+      </strong>
       <br />
+      {{ purchase_form.paid_with }}
+      {{ purchase_form.paid_with.errors }}<br />
 
+      <br />
+      
       <div class="multicolumn3 clearfix">
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
+	  <br />
+	</div>
+	<div class="column" style="width: 16%; float: left;">	
 	  <strong>Quality</strong>
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
 	  <strong>No. of Bags</strong>
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
 	 <strong>Weight (Kg)</strong>
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
 	  <strong>Rate (per Qtl)</strong>
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
 	  <strong>Amount</strong>
 	</div>
       </div>
       <br />
       <div class="multicolumn3 clearfix">
 	{% for entry in entries %}
-	<div class="column" style="width: 20%; float: left;">
-	  {{ entry.product.name }}<br />
+	<div class="entry">
+	  <div class="column" style="width: 16%; float: left;">	
+	    <input type="checkbox" class="chk"><br />
+	  </div>
+	  <div class="column" style="width: 16%; float: left;">
+	    {{ entry.product.name }}<br />
+	  </div>
+	  <div class="column" style="width: 16%; float: left;">	
+	    <input type="number" class="per_bags" value="{{ entry.bags }}"><br />
+	  </div>
+	  <div class="column" style="width: 16%; float: left;">	
+	    <input type ="number" class="per_weight" step="any" value="{{ entry.weight }}"><br />
+	  </div>
+	  <div class="column" style="width: 16%; float: left;">	
+	    <input type="number" class="per_rate" value="{{ entry.rate }}"><br />
+	  </div>
+	  <div class="column" style="width: 16%; float: left;">	
+	    <input type="number" class="per_amount" step="any" value="{{ entry.amount }}" readonly><br />
+	  </div>
+	  <br />
+	  <br />
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
-	  <input type="number" class="per_bags" value="{{ entry.bags }}"><br />
-	</div>
-	<div class="column" style="width: 20%; float: left;">	
-	  <input type ="number" class="per_weight" step="any" value="{{ entry.weight }}"><br />
-	</div>
-	<div class="column" style="width: 20%; float: left;">	
-	  <input type="number" class="per_rate" value="{{ entry.rate }}"><br />
-	</div>
-	<div class="column" style="width: 20%; float: left;">	
-	  <input type="number" class="per_amount" step="any" value="{{ entry.amount }}"><br />
-	</div>
-	<br />
-	<br />
 	{% endfor %}
       </div>
 
       <div class="multicolumn3 clearfix">
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
 	  <br />
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
+	
+	<div class="column" style="width: 16%; float: left;">	
+	  <br />
+	</div>
+	<div class="column" style="width: 16%; float: left;">	
 	  {{ purchase_form.bags.errors }}
 	  {{ purchase_form.bags }}<br />
 	  {{ purchase_form.bags.help_text }}<br />
 	</div>
-	<div class="column" style="width: 20%; float: left;">
+	<div class="column" style="width: 16%; float: left;">
 	  {{ purchase_form.weight.errors }}
 	  {{ purchase_form.weight }}<br />
 	  {{ purchase_form.weight.help_text }}<br />
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
 	  <br />
 	</div>
-	<div class="column" style="width: 20%; float: left;">	
+	<div class="column" style="width: 16%; float: left;">	
 	  {{ purchase_form.net_loose_amount.errors }}
 	  {{ purchase_form.net_loose_amount }}<br />
 	  {{ purchase_form.net_loose_amount.help_text }}<br />
 	</div>
       </div>
+      <br />
+      <p align = "right">
+	<input type="button" id="row_delete" value="Delete Row">
+      </p>
+  
       <br />
       <div class="multicolumn3 clearfix">
 	<div class="column" style="width: 20%; float: left;">	
@@ -173,7 +195,16 @@
 
 <script src = "/static/js/jquery-2.1.1.js"></script>
 
+
 <script>
+  $(document).ready(function() {
+  $(".navbar").empty().remove();
+  });
+</script>
+
+
+<script>
+  function initial_calc(){
   var b = $(".per_bags");
   var w = $(".per_weight");
   var r = $(".per_rate");
@@ -219,7 +250,7 @@
     tds = 0.0;
     }}
 
-var net_amount = gross_amount + vat - tds - muddat;  
+  var net_amount = gross_amount + vat - tds - muddat;  
 
   $("#id_bags").val(bags);
   $("#id_weight").val(weight_total);
@@ -233,13 +264,19 @@ var net_amount = gross_amount + vat - tds - muddat;
   $("#id_muddat").val(muddat.toFixed(2));
   $("#id_TDS").val(tds.toFixed(2));
   $("#id_amount").val(net_amount.toFixed(0));
+  }
 </script>
 
 <script>
-  $(".per_bags, .per_weight, .per_rate, #id_paid_with, .original_rate, #id_seller, #id_firm, #id_narration").change(function(){
+  initial_calc();
+</script>
+
+<script>
+  function change_calc(){
   var b = $(".per_bags");
   var w = $(".per_weight");
   var r = $(".per_rate");
+  var a = $(".per_amount");
   var paid = $("#id_paid_with").val();
   var s = $("#id_seller option:selected").text();
   var f = $("#id_firm option:selected").text();
@@ -326,6 +363,29 @@ var net_amount = gross_amount + vat - tds - muddat;
   $("#id_muddat").val(muddat.toFixed(2));
   $("#id_TDS").val(tds.toFixed(2));
   $("#id_amount").val(net_amount.toFixed(0));
-  })
+  }
 </script>
+
+
+<script>
+  $(".per_bags, .per_weight, .per_rate, #id_paid_with, .original_rate, #id_seller, #id_firm, #id_narration").on("change", change_calc)
+</script>
+
+
+<script>
+  $("#row_delete").click(function() {
+  var checkboxes = $(".chk");
+  var entries = $(".entry");
+
+  for(var i = 0; i<checkboxes.length; i++) {
+				      if (checkboxes[i].checked){
+				      $(entries[i]).empty().remove();
+				      change_calc();
+				      } 
+				      }
+  
+  });
+</script>
+
+
 {% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class = "container">
+
+  <form class = "form-signin span4" id="super_user_form" method= "post" action= "/en/partal/superuser/all/view/0">
+    <h2 class = "form-signin-heading">Summary</h2>
+    {% csrf_token %}
+
+    <!-- Display Super User Form -->
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">	
+	{{ super_user_form.date.help_text }}<br />              
+	{{ super_user_form.date }}<br />         
+	{{ super_user_form.date.errors }}   
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ super_user_form.table.help_text }}<br />
+	{{ super_user_form.table }}<br />
+	{{ super_user_form.table.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	<!-- Provide a click to submit the form -->
+	<br />
+	<input type = "submit" name = "submit" value = "Submit" />
+      </div>
+    </div>
+  </form>
+  
+  <br />
+
+  {% if data %}
+  

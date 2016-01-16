@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 import datetime
 
 import json
@@ -346,6 +346,44 @@ def purchase_detail(request):
         return render(request, 'partal/purchase.html', context_dict)
 
 
+    
+# Function to delete purchase detail entry
+def delete_purchase_detail(entry):
+
+    #Make changes to daily purchase
+    daily_purchase = DailyPurchase.objects.get(date = entry.date,
+                                               product = entry.product)
+
+    daily_purchase.product_weight -= float(entry.weight)
+    daily_purchase.product_bags -= int(entry.bags)
+    daily_purchase.total_purchase_amount -= float(entry.amount)
+    if daily_purchase.product_weight == 0.0:
+        daily_purchase.rate = 0.0 
+    else:
+        daily_purchase.rate = daily_purchase.total_purchase_amount/daily_purchase.product_weight
+        
+    daily_purchase.save()
+
+    #Make changes to Product quantity
+    product = Product.objects.get(name = entry.product)
+
+    product.net_stock_raw -= float(entry.weight)
+    product.bags_raw -= int(entry.bags)
+    
+    product.save()
+    
+    #Make changes to Commodity quantity
+    commodity = Commodity.objects.get(name = product.commodity.name)
+    
+    commodity.net_stock_raw -= float(entry.weight)
+    commodity.bags_raw -= int(entry.bags)
+    
+    commodity.save()
+    
+    #Delete the purchase detail entry
+    entry.delete()
+
+        
 
 # Delete Purchase detail
 @login_required
@@ -356,7 +394,7 @@ def purchase_delete(request, entry_id):
     firms = Firm.objects.filter(group = entry.seller.group)
     entries = []
 
-    # Check date of entry. Only current date entries can be deleted
+    # Check if entry is billed. Billed entries can't be deleted.
     for firm in firms:
         
         invoices = PurchaseInvoice.objects.filter(date = entry.date, seller = firm.name)
@@ -366,43 +404,12 @@ def purchase_delete(request, entry_id):
     # Make changes only if invoice is not made
     if not entries:
         
-        #Make changes to daily purchase
-        daily_purchase = DailyPurchase.objects.get(date = entry.date, product = entry.product)
-
-        daily_purchase.product_weight -= float(entry.weight)
-        daily_purchase.product_bags -= int(entry.bags)
-        daily_purchase.total_purchase_amount -= float(entry.amount)
-        if daily_purchase.product_weight == 0.0:
-           daily_purchase.rate = 0.0 
-        else:
-            daily_purchase.rate = daily_purchase.total_purchase_amount/daily_purchase.product_weight
+        delete_purchase_detail(entry)
         
-        daily_purchase.save()
-
-        #Make changes to Product quantity
-        product = Product.objects.get(name = entry.product)
-
-        product.net_stock_raw -= float(entry.weight)
-        product.bags_raw -= int(entry.bags)
-
-        product.save()
-
-        #Make changes to Commodity quantity
-        commodity = Commodity.objects.get(name = product.commodity.name)
-
-        commodity.net_stock_raw -= float(entry.weight)
-        commodity.bags_raw -= int(entry.bags)
-
-        commodity.save()
-
-        #Delete the purchase detail entry
-        entry.delete()
-
     return HttpResponseRedirect('/partal/purchase/')
           
-        
-          
-        
+
+
 # Purhcase Invoice generation and entry
 @login_required
 def purchase_invoice(request):
@@ -423,10 +430,8 @@ def purchase_invoice(request):
             entries = PurchaseInvoiceDetail.objects.filter(date = date)
 
             if not entries:
-                message = "No entries for this date"
                 
-                context_dict = {"message": message,
-                                "date": date,
+                context_dict = {"date": date,
                                 "date_form": date_form
                                 }
 
@@ -494,7 +499,6 @@ def invoice_save(request, date, seller):
             try:
                 
                 #Check if entry already present
-                print request.POST['paid_with']
                 entry = PurchaseInvoice.objects.get(date = date, seller = request.POST['seller'], paid_with = request.POST['paid_with'])
                 
             except PurchaseInvoice.DoesNotExist:
@@ -595,13 +599,195 @@ def sale_estimate(request):
             context_dict = {"sale_estimate_form": sale_estimate_form}
 
     else:
-            # Errors in form
+            # Not a post request
             context_dict = {"sale_estimate_form": sale_estimate_form}
 
     return render(request, 'partal/estimatesale.html', context_dict)
 
 
 
+# TDS view for all the firms
+@login_required
+def tds_view(request):
+    
+    context_dict = {}
+    tds_view_form = TdsViewForm()
+    data = []
+
+    if request.method == 'POST':
+
+        tds_view_form = TdsViewForm(data = request.POST)
+
+        if tds_view_form.is_valid():
+
+            start_date = request.POST['start_date_year'] + "-" + request.POST['start_date_month'] + "-" + request.POST['start_date_day']
+            end_date = request.POST['end_date_year'] + "-" + request.POST['end_date_month'] + "-" + request.POST['end_date_day']
+
+            firms = Firm.objects.all()
+
+            # Fetching and Aggregating data for each firm
+            for firm in firms:
+
+                entries = PurchaseInvoice.objects.filter(date__gte = start_date,
+                                                         date__lte = end_date,
+                                                         seller = firm)
+
+                # If entires for the firm are preset
+                if entries:
+                    
+                    entries_APB = entries.filter(firm = 'APB')
+                    count_entries_APB = len(entries_APB)
+
+                    # If no entries in APB
+                    if not entries_APB:
+                        commission_APB = 0.0
+                        tds_APB = 0.0
+                    else:    
+                        commission_APB = entries_APB.aggregate(
+                            Sum('commission'))['commission__sum']
+                        tds_APB = entries_APB.aggregate(Sum('TDS'))['TDS__sum']
+                    
+                    entries_KY = entries.filter(firm = 'KY')
+                    count_entries_KY = len(entries_KY)
+
+                    # If no entries in KY
+                    if not entries_KY:
+                        commission_KY = 0.0
+                        tds_KY = 0.0
+                    else:
+                        commission_KY = entries_KY.aggregate(
+                            Sum('commission'))['commission__sum']
+                        tds_KY = entries_KY.aggregate(Sum('TDS'))['TDS__sum']
+
+                    # Updating data array
+                    data.append([firm.name, count_entries_APB, commission_APB, tds_APB,
+                                 count_entries_KY, commission_KY, tds_KY])
+
+                # If there are no entries for firm
+                else:
+                    data.append([firm.name, 0, 0.0, 0.0, 0, 0.0, 0.0])
+
+            # Calculating total values
+            total_bills_APB = 0
+            total_commission_APB = 0.0
+            total_tds_APB = 0.0
+            total_bills_KY = 0
+            total_commission_KY = 0.0
+            total_tds_KY = 0.0
+            
+            for values in data:
+                total_bills_APB += values[1]
+                total_commission_APB += values[2]
+                total_tds_APB += values[3]
+                total_bills_KY += values[4]
+                total_commission_KY += values[5]
+                total_tds_KY += values[6]
+
+            context_dict = {"tds_view_form": tds_view_form,
+                            "data": data,
+                            "total_bills_APB": total_bills_APB,
+                            "total_bills_KY": total_bills_KY,
+                            "total_commission_APB": total_commission_APB,
+                            "total_commission_KY": total_commission_KY,
+                            "total_tds_APB": total_tds_APB,
+                            "total_tds_KY": total_tds_KY,
+                            }
+
+        else:
+            # Errors in form
+            context_dict = {"tds_view_form": tds_view_form}
+
+    else:
+        # Not a post request
+        context_dict = {"tds_view_form": tds_view_form}
+
+    return render(request, 'partal/viewtds.html', context_dict)
+
+
+            
+# Super user functionalities
+@user_passes_test(lambda u: u.is_superuser)
+def super_user(request, table, action, entry_id):
+
+    super_user_form = SuperUserForm()
+    context_dict = {}
+
+    if request.method == 'POST':
+
+        super_user_form = SuperUserForm(data = request.POST)
+
+        if super_user_form.is_valid():
+            
+            date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
+        
+            # Post request to view entries
+            if (action == 'view'):
+
+                # Fetch and send entries from Purchase Invoice table
+                if (request.POST['table'] == 'invoice'):
+                    data = PurchaseInvoice.objects.filter(date = date)
+
+                # Fetch and send entries from Purchase Detail table
+                if (request.POST['table'] == 'detail'):
+                    data = PurchaseInvoiceDetail.objects.filter(date = date)
+
+                context_dict = {"data": data,
+                                "table": request.POST['table'],
+                                "super_user_form": super_user_form
+                                }
+        else:
+            # Errors in form
+            context_dict = {"super_user_form": super_user_form}
+
+    else:
+        # Request for delete
+        if (action == "delete"):
+            
+            # Delete entry from Purchase Invoice table
+            if (table == 'invoice'):
+                
+                entry = PurchaseInvoice.objects.get(id = entry_id)
+                
+                #Updating Firm Record
+                firm = Firm.objects.get(name = entry.seller.name)
+                
+                firm.net_purchase_weight -= float(entry.weight)
+                firm.net_purchase_amount -= int(entry.amount)
+                
+                if entry.firm == "APB":
+                    firm.net_commission_APB -= float(entry.commission)
+                if entry.firm == "KY":
+                    firm.net_commission_KY -= float(entry.commission)
+                
+                firm.save()
+                
+                # Delete entry
+                entry.delete()
+
+                # Redirect to make new entry
+                return HttpResponseRedirect('/partal/invoice/')
+
+            # Delete entry from Purhcase Invoice Detail Table
+            if (table == 'detail'):
+                
+                entry = PurchaseInvoiceDetail.objects.get(id = entry_id)
+                
+                # Make changes and delete entry
+                delete_purchase_detail(entry)
+                
+                # Redirect to make new entry
+                return HttpResponseRedirect('/partal/purchase/')
+
+        # Not a post or delete request
+        else:
+            context_dict = {"super_user_form": super_user_form}
+            
+
+
+    return render(request, 'partal/superuser.html', context_dict)
+
+
+    
 # Print pdf option
 @login_required
 def output_pdf(request):

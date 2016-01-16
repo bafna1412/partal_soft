@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class = "container">
+
+  <form class = "form-signin span4" id="super_user_form" method= "post" action= "/en/partal/superuser/all/view/0/">
+    <h2 class = "form-signin-heading">Summary</h2>
+    {% csrf_token %}
+
+    <!-- Display Super User Form -->
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">	
+	{{ super_user_form.date.help_text }}<br />              
+	{{ super_user_form.date }}<br />         
+	{{ super_user_form.date.errors }}   
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ super_user_form.table.help_text }}<br />
+	{{ super_user_form.table }}<br />
+	{{ super_user_form.table.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	<!-- Provide a click to submit the form -->
+	<br />
+	<input type = "submit" name = "submit" value = "Submit" />
+      </div>
+    </div>
+  </form>
+  
+  <br />
+
+  {% if data %}
+  {% if table == 'invoice' %} 
+  <div class="multicolumn3 clearfix">
+    <div class="column" style="width: 12%; float: left;">	
+     <center><strong>Date</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Firm</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Invoice No.</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Commodity</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Billed In</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Paid With</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Amount</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong></strong></center>
+    </div>
+  </div>
+
+  <br />
+
+  <div class="multicolumn3 clearfix">
+    {% for entry in data %}
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.date }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.seller }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.seller_invoice_no }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.family }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.firm }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.paid_with }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.amount }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>
+	<a href="/partal/superuser/{{ table }}/delete/{{ entry.id }}/">delete</a>
+      </center>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  
+  {% if table == 'detail' %}
+  <div class="multicolumn3 clearfix">
+    <div class="column" style="width: 12%; float: left;">	
+     <center><strong>Date</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Firm Group</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Product</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Bags</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Weight</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Rate</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong>Amount</strong></center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center><strong></strong></center>
+    </div>
+  </div>
+
+  <br />
+
+  <div class="multicolumn3 clearfix">
+    {% for entry in data %}
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.date }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.seller }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.product }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.bags }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.weight }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.rate }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>{{ entry.amount }}</center>
+    </div>
+    <div class="column" style="width: 12%; float: left;">	
+      <center>
+	<a href="/partal/superuser/{{ table }}/delete/{{ entry.id }}/">delete</a>
+      </center>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <strong>No {{table }} entries for selected date</strong>
+  {% endif %}
+
+</div>
+{% endblock %}
+  
+
+

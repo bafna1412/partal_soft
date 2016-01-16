@@ -19,6 +19,12 @@ FIRM_CHOICES = (
     ('APB', 'APB'), ('KY', 'KY')
     )
 
+TABLE_CHOICES = (
+    ('invoice', 'Purchase Invoice'), ('detail', 'Purchase Detail')
+    )
+
+
+# Firm registration form
 class FirmForm(forms.ModelForm):
 
     name = forms.CharField(help_text = "Firm Name", required = True, max_length = 100)
@@ -34,7 +40,7 @@ class FirmForm(forms.ModelForm):
         fields = ('name', 'group', 'address', 'contact_number', 'PAN', 'TIN')
 
 
-
+# Commodity registration form
 class CommodityForm(forms.ModelForm):
 
     name = forms.CharField(help_text = "Commodity Name", required = True, max_length = 20)
@@ -45,6 +51,7 @@ class CommodityForm(forms.ModelForm):
         fields = ('name',)
 
 
+# Product registration form
 class ProductForm(forms.ModelForm):
 
     name = forms.CharField(help_text = "Product Name", required = True, max_length = 20)
@@ -58,6 +65,7 @@ class ProductForm(forms.ModelForm):
         fields = ('name',)
 
 
+# Purchase invoice entry form
 class PurchaseForm(forms.ModelForm):
     
     date = forms.DateField(help_text = "Invoice Date", initial = datetime.date.today, required = True,
@@ -77,16 +85,20 @@ class PurchaseForm(forms.ModelForm):
     paid_with = forms.FloatField(help_text = "Paid With", required = False,
                                  min_value = 0.0, initial = 0.0)
 
-    weight = forms.FloatField(help_text = "Total Weight", required = True, min_value = 0.0)
+    weight = forms.FloatField(help_text = "Total Weight", required = True, min_value = 0.0,
+                              widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
-    bags = forms.IntegerField(help_text = "Total Bags", required = True, min_value = 0)
+    bags = forms.IntegerField(help_text = "Total Bags", required = True, min_value = 0,
+                              widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
     net_loose_amount = forms.FloatField(help_text = "Net Loose Amount", required = True,
-                                        min_value = 0.0)
+                                        min_value = 0.0, widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
-    commission = forms.FloatField(help_text = "Commission", required = True, min_value = 0.0)
+    commission = forms.FloatField(help_text = "Commission", required = True, min_value = 0.0,
+                                  widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
-    mandi_tax = forms.FloatField(help_text = "Mandi Tax", required = True, min_value = 0.0)
+    mandi_tax = forms.FloatField(help_text = "Mandi Tax", required = True,
+                                 min_value = 0.0)
 
     association_charges = forms.FloatField(help_text = "Association Charges", required = True,
                                            min_value = 0.0)
@@ -94,15 +106,18 @@ class PurchaseForm(forms.ModelForm):
     dharmada = forms.FloatField(help_text = "Dharmada", required = True, min_value = 0.0)
 
     net_gross_amount = forms.FloatField(help_text = "Net Gross Amount", required = True,
-                                        min_value = 0.0)
+                                        min_value = 0.0, widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
-    VAT = forms.FloatField(help_text = "VAT", required = True, min_value = 0.0)
+    VAT = forms.FloatField(help_text = "VAT", required = True, min_value = 0.0,
+                           widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
     muddat = forms.FloatField(help_text = "Muddat", required = True, min_value = 0.0)
 
-    TDS = forms.FloatField(help_text = "TDS", required = True, min_value = 0.0)
+    TDS = forms.FloatField(help_text = "TDS", required = True, min_value = 0.0,
+                           widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
-    amount = forms.FloatField(help_text = "Net Amount", required = True, min_value = 0.0)
+    amount = forms.FloatField(help_text = "Net Amount", required = True, min_value = 0.0,
+                              widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
     narration = forms.CharField(help_text = "Narration", required = False, widget = forms.Textarea)
     
@@ -117,6 +132,7 @@ class PurchaseForm(forms.ModelForm):
 
 
 
+# Purchase detail entry form
 class PurchaseDetailForm(forms.ModelForm):
 
 
@@ -135,7 +151,8 @@ class PurchaseDetailForm(forms.ModelForm):
     
     rate = forms.IntegerField(help_text = "Product Rate (for Qtl)", required = True, min_value = 0)
     
-    amount = forms.FloatField(help_text = "Amount (Rs.)", required = True, min_value = 0.0)
+    amount = forms.FloatField(help_text = "Amount (Rs.)", required = True, min_value = 0.0,
+                              widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
     class Meta:
 
@@ -143,6 +160,8 @@ class PurchaseDetailForm(forms.ModelForm):
         fields = ('date', 'seller', 'product', 'weight', 'bags', 'rate', 'amount')
 
 
+
+# Purchase invoice date form
 class DateForm(forms.Form):
 
     date = forms.DateField(help_text = "Purchase Invoice Date", initial = datetime.date.today, required = True,
@@ -150,6 +169,7 @@ class DateForm(forms.Form):
     
 
 
+# Sale estimate generation form
 class SaleEstimateForm(forms.Form):
 
     start_date = forms.DateField(help_text = "From", initial = datetime.date.today, required = True,
@@ -163,6 +183,7 @@ class SaleEstimateForm(forms.Form):
     
 
 
+# Sale invoice entry form
 class SaleForm(forms.ModelForm):
     
     date = forms.DateField(help_text = "Invoice Date", initial = datetime.date.today, required = True,
@@ -183,6 +204,8 @@ class SaleForm(forms.ModelForm):
         fields = ('date', 'buyer', 'invoice_no', 'family', 'storage')
 
 
+
+# Sale detail entry form
 class SaleDetailForm(forms.ModelForm):
 
     product =  forms.ModelChoiceField(help_text = "Product", required = True,
@@ -196,9 +219,9 @@ class SaleDetailForm(forms.ModelForm):
         model = SaleInvoiceDetail
         fields = ('product', 'weight', 'bags', 'rate')
 
-    
 
 
+# Process entry form
 class ProcessEntryForm(forms.ModelForm):
 
     date = forms.DateField(help_text = "Invoice Date", initial = datetime.date.today, required = True,
@@ -217,3 +240,28 @@ class ProcessEntryForm(forms.ModelForm):
         
         model = ProcessEntry
         fields = ('date', 'product', 'process', 'weight_in', 'bags_in', 'weight_out', 'bags_out')
+
+
+
+# TDS sheet generation form
+class TdsViewForm(forms.Form):
+
+    start_date = forms.DateField(help_text = "From", initial = datetime.date.today, required = True,
+                                 widget = SelectDateWidget)
+    
+    end_date = forms.DateField(help_text = "To", initial = datetime.date.today, required = True,
+                                 widget = SelectDateWidget)
+
+
+
+# Super user functionalities form
+class SuperUserForm(forms.Form):
+
+    date = forms.DateField(help_text = "Date",
+                           initial = datetime.date.today, required = True,
+                           widget = SelectDateWidget)
+
+    table = forms.TypedChoiceField(help_text = "Data Type", required = True,
+                                    choices = TABLE_CHOICES)
+    
+    

@@ -21,9 +21,8 @@ class Firm(models.Model):
     net_commission_KY = models.FloatField(default = 0.0)
     net_purchase_weight = models.FloatField(default = 0.0)
     net_purchase_amount = models.PositiveIntegerField(default = 0)
-    monthly_TDS_APB = models.FloatField(default = 0.0)
-    monthly_TDS_KY = models.FloatField(default = 0.0)
 
+    
     def __unicode__(self):
         
         return u'{0}'.format(self.name)

@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect
 
 class FirmAdmin(admin.ModelAdmin):
     
-    list_display = ('name', 'group', 'address', 'contact_number', 'PAN', 'TIN', 'net_commission_APB', 'net_commission_KY', 'net_purchase_weight', 'net_purchase_amount', 'monthly_TDS_APB', 'monthly_TDS_KY')
+    list_display = ('name', 'group', 'address', 'contact_number', 'PAN', 'TIN', 'net_commission_APB', 'net_commission_KY', 'net_purchase_weight', 'net_purchase_amount')
 
 class ClientAdmin(admin.ModelAdmin):
 
@@ -29,7 +29,7 @@ class RateDetailAdmin(admin.ModelAdmin):
 
 class PurchaseInvoiceAdmin(TotalsumAdmin):
 
-    list_display = ('date', 'merchant', 'seller_invoice_no', 'firm', 'commodity', 'weight', 'bags', 'net_loose_amount', 'commission', 'mandi_tax', 'association_charges', 'dharmada', 'muddat', 'VAT', 'TDS', 'amount', 'narration')
+    list_display = ('date', 'merchant', 'seller_invoice_no', 'firm', 'commodity', 'paid_with', 'weight', 'bags', 'net_loose_amount', 'commission', 'mandi_tax', 'association_charges', 'dharmada', 'muddat', 'VAT', 'TDS', 'amount', 'narration')
     list_filter = ('date', 'firm', 'seller__name')
     search_fields = ['date']
     totalsum_list = ('weight', 'bags', 'net_loose_amount', 'commission', 'mandi_tax', 'association_charges', 'dharmada', 'muddat', 'VAT', 'TDS', 'amount')

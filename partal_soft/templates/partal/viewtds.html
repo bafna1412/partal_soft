@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class = "container">
+
+  <form class = "form-signin span4" id="tds_view_form" method= "post" action= "/en/partal/viewtds/">
+    <h2 class = "form-signin-heading">Summary</h2>
+    {% csrf_token %}
+
+    <!-- Display TDS Form -->
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">	
+	{{ tds_view_form.start_date.help_text }}<br />              
+	{{ tds_view_form.start_date }}<br />         
+	{{ tds_view_form.start_date.errors }}   
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ tds_view_form.end_date.help_text }}<br />
+	{{ tds_view_form.end_date }}<br />
+	{{ tds_view_form.end_date.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	<!-- Provide a click to submit the form -->
+	<br />
+	<input type = "submit" name = "submit" value = "Submit" />
+      </div>
+    </div>
+  </form>
+
+  <br />
+
+  {% if data %}
+  <div class="multicolumn3 clearfix">
+    <div class="column" style="width: 14%; float: left;">	
+     <center><strong>Firm</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>Bills APB</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>Commission APB</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>TDS APB</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>Bills KY</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>Commission KY</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>TDS KY</strong></center>
+    </div>
+  </div>
+
+  <br />
+  
+  <div class="multicolumn3 clearfix">
+    {% for entry in data %}
+    <div class="column" style="width: 14%; float: left;">	
+      <center>{{ entry.0 }}</center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center>{{ entry.1 }}</center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center>{{ entry.2 }}</center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center>{{ entry.3 }}</center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center>{{ entry.4 }}</center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center>{{ entry.5 }}</center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center>{{ entry.6 }}</center>
+    </div>
+    {% endfor %}
+  </div>
+
+  <br />
+  
+  <div class="multicolumn3 clearfix">
+    <div class="column" style="width: 14%; float: left;">	
+     <center><strong>Total</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>{{ total_bills_APB }}</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>{{ total_commission_APB }}</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>{{ total_tds_APB }}</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>{{ total_bills_KY }}</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>{{ total_commission_KY }}</strong></center>
+    </div>
+    <div class="column" style="width: 14%; float: left;">	
+      <center><strong>{{ total_tds_KY }}</strong></center>
+    </div>
+  </div>
+
+  {% else %}
+  <strong>No entries for the period you selected.</strong>
+  {% endif %}
+
+</div>
+
+{% endblock %}

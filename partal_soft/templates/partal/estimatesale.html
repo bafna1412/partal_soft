@@ -35,6 +35,7 @@
 
   <br />
 
+  {% if data %}
   <form target="_blank" class="form-signin span4" id="output_pdf_form" method="post" action="/en/partal/outputpdf/">
     {% csrf_token %}
     <strong>Client:</strong> <input type="text" size="50" name="name" required><br />
@@ -103,16 +104,16 @@
 	      <td><strong>Total</strong></td>
 	    </div>
 	    <div class="column" style="width: 20%; float: left;">	
-	      <td><input type="number" id="total_bags" name="bags_total" value=""></td>
+	      <td><input type="number" id="total_bags" name="bags_total" value="" readonly></td>
 	    </div>
 	    <div class="column" style="width: 20%; float: left;">	
-	      <td><input type="number" id="total_weight" step="any" name="weight_total" value=""></td>
+	      <td><input type="number" id="total_weight" step="any" name="weight_total" value="" readonly></td>
 	    </div>
 	    <div class="column" style="width: 20%; float: left;">
 	      <td></td>
 	    </div>
 	    <div class="column" style="width: 20%; float: left;">	
-	      <td><input type="number" id="total_amount" step="any" name="amount_total" value=""></td>
+	      <td><input type="number" id="total_amount" step="any" name="amount_total" value="" readonly></td>
 	    </div>
 	    <div class="column" style="width: 20%; float: left;">	
 	      <td><input type="submit" name="submit" value="Sale Estimate" /></td>
@@ -125,6 +126,9 @@
   <p align = "right">
     <input type="button" value="Delete Row" onclick="deleteRow('dataTable');calc_function()">
   </p>
+  {% else %}
+  <strong>No entries for the period you selected.</strong>
+  {% endif %}
   <br />
   
 </div>
@@ -134,6 +138,7 @@ function deleteRow(tableID){try{var table=document.getElementById(tableID);var r
 table.deleteRow(i);rowCount--;i--;}}}catch(e){alert(e);}}</script>
 
 <script src = "/static/js/jquery-2.1.1.js"></script>
+
 
 <script>
   function calc_function(){
