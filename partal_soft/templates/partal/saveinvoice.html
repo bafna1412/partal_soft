@@ -175,12 +175,13 @@
 	{{ purchase_form.amount.help_text }}<br />
 	{{ purchase_form.amount }}<br />
       </p>
-	
+
+      <strong>Note:</strong><br />
+      1. In case of paid bill for half. Add <strong>half with</strong> in narration. <br />
+      2. In case of mandi tax paid bill. Add <strong>mandi tax paid</strong> in narration.
       {{ purchase_form.narration.errors }}
       {{ purchase_form.narration.help_text }}<br />
       {{ purchase_form.narration }}<br />
-      <strong>Note:</strong> In case of paid bill for half. Add <strong>half with</strong> in narration.
-
       <!-- Provide a click to submit the form -->
       <p align = "center">
 	<input type = "submit" name = "submit" value = "Save" />
@@ -303,11 +304,18 @@
 			      loose_amount += amount[i];
 			      }
 
-  if (paid > 0.0){
-    var commission = 0.0;
+    if (paid > 0.0){
     var mandi_tax = 0.0;
+    if (narration.indexOf("mandi tax paid") > -1) {
+    var commission = loose_amount*{{ charges.commission }}/100;
+    var association_charges = weight_total*{{ charges.association_charges }}/100;
+    var dharmada = weight_total*{{ charges.dharmada }}/100;
+    }
+    else {
+    var commission = 0.0;
     var association_charges = 0.0;
     var dharmada = 0.0;
+    }
     }
   else{
     var commission = loose_amount*{{ charges.commission }}/100;

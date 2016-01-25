@@ -85,6 +85,7 @@ def firm_register(request):
 
     context_dict = {}
     firm_form = FirmForm()
+    firm_groups = Firm.objects.values_list('group', flat=True).distinct()
 
     if request.method == "POST":
 
@@ -103,7 +104,9 @@ def firm_register(request):
                 firm = firm_form.save()
                 firm_form = FirmForm()
                 context_dict = {"message": "Firm Registered",
-                                "firm_form": firm_form}
+                                "firm_form": firm_form,
+                                "firm_groups": firm_groups
+                                }
 
                 return render(request, 'partal/firm.html', context_dict)
 
@@ -119,7 +122,10 @@ def firm_register(request):
 
     else:
         # Not a POST Request
-        context_dict = {"firm_form": firm_form}
+        context_dict = {"firm_form": firm_form,
+                        "firm_groups": firm_groups
+                        }
+        
         return render(request, 'partal/firm.html', context_dict)
 
 

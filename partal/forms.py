@@ -28,7 +28,7 @@ TABLE_CHOICES = (
 class FirmForm(forms.ModelForm):
 
     name = forms.CharField(help_text = "Firm Name", required = True, max_length = 100)
-    group = forms.CharField(help_text = "Firm Group", required = True, max_length = 10)
+    group = forms.CharField(help_text = "Firm Group", max_length = 10, required = True) 
     address = forms.CharField(help_text = "Address of Firm", required = True, widget = forms.Textarea)
     contact_number = forms.CharField(help_text = "Contact Number", required = True, max_length = 11)
     PAN = forms.CharField(help_text = "PAN Number", max_length = 10)
