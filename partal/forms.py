@@ -97,8 +97,8 @@ class PurchaseForm(forms.ModelForm):
     commission = forms.FloatField(help_text = "Commission", required = True, min_value = 0.0,
                                   widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
-    mandi_tax = forms.FloatField(help_text = "Mandi Tax", required = True,
-                                 min_value = 0.0)
+    mandi_tax = forms.FloatField(help_text = "Mandi Tax", required = True, min_value = 0.0,
+                                 widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
     association_charges = forms.FloatField(help_text = "Association Charges", required = True,
                                            min_value = 0.0)
