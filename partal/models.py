@@ -165,14 +165,17 @@ class SaleInvoice(models.Model):
 
     date = models.DateField(default = datetime.date.today())
     buyer = models.ForeignKey(Client)
+    firm = models.CharField(max_length = 10, default = "None")
     invoice_no = models.CharField(max_length = 10, default = "None", unique = True)
     family = models.ForeignKey(Commodity)
     storage = models.CharField(max_length = 25, default = "None")
     weight = models.FloatField(default = 0.0)
     bags = models.PositiveIntegerField(default = 0)
+    net_loose_amount = models.FloatField(default = 0.0)
     VAT = models.FloatField()
     insurance = models.FloatField()
     amount = models.PositiveIntegerField()
+    narration = models.TextField(default = "None")
 
     def client(self):
 
@@ -196,6 +199,10 @@ class SaleInvoiceDetail(models.Model):
 
         return self.invoice.invoice_no
 
+    def invoice_date(self):
+
+        return self.invoice.date
+
     def product_type(self):
 
         return self.product.name 
@@ -211,12 +218,37 @@ class ProcessEntry(models.Model):
     date = models.DateField(default = datetime.date.today())
     product = models.ForeignKey(Product)
     process = models.CharField(max_length = 100, default = "None")
+    final_out = models.BooleanField(default = False)
     weight_in = models.FloatField(default = 0.0)
     bags_in = models.PositiveIntegerField(default = 0)
     weight_out = models.FloatField(default = 0.0)
     bags_out = models.PositiveIntegerField(default = 0)
+    pulse_weight = models.FloatField(default = 0.0)
+    pulse_bags = models.PositiveIntegerField(default = 0)
+    jhiri_weight = models.FloatField(default = 0.0)
+    jhiri_bags = models.PositiveIntegerField(default = 0)
+    danthal_weight = models.FloatField(default = 0.0)
+    danthal_bags = models.PositiveIntegerField(default = 0)
+    stone_weight = models.FloatField(default = 0.0)
+    stone_bags = models.PositiveIntegerField(default = 0)
+    short_weight = models.FloatField(default = 0.0)
+    percentage_out = models.FloatField(default = 0.0)
     storage = models.CharField(max_length = 25, default = "None")
 
     def product_type(self):
 
         return self.product.name
+
+
+class WasteProduct(models.Model):
+
+    name = models.CharField(unique = True, primary_key = True, max_length = 20)
+    weight = models.FloatField(default = 0.0)
+    bags = models.PositiveIntegerField(default = 0)
+
+    def __unicode__(self):
+        
+        return u'{0}'.format(self.name)
+
+
+    

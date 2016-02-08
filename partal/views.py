@@ -483,7 +483,7 @@ def invoice_save(request, date, seller):
     purchase_form.fields['seller'].queryset = sellers
     
     #Entries of the seller selected
-    entries = PurchaseInvoiceDetail.objects.filter(seller = seller)
+    entries = PurchaseInvoiceDetail.objects.filter(seller = seller, date = date)
     
     #Getting all the extra charge rates
     charges = RateDetail.objects.get(id = 1)
@@ -737,6 +737,15 @@ def super_user(request, table, action, entry_id):
                 if (request.POST['table'] == 'detail'):
                     data = PurchaseInvoiceDetail.objects.filter(date = date)
 
+                # Fetch and send entries from Process Entry table
+                if (request.POST['table'] == 'process'):
+                    data = ProcessEntry.objects.filter(date = date)
+
+                # Fetch and send entries from Sale Invoice table
+                if (request.POST['table'] == 'sale'):
+                    data = SaleInvoice.objects.filter(date = date)
+
+
                 context_dict = {"data": data,
                                 "table": request.POST['table'],
                                 "super_user_form": super_user_form
@@ -783,6 +792,121 @@ def super_user(request, table, action, entry_id):
                 
                 # Redirect to make new entry
                 return HttpResponseRedirect('/partal/purchase/')
+
+            if (table == 'process'):
+
+                entry = ProcessEntry.objects.get(id = entry_id)
+
+                # Updating Product and Commodity Records
+                product = Product.objects.get(name = entry.product.name)
+                commodity = Commodity.objects.get(name = entry.product.commodity.name)
+                
+                if entry.final_out:
+                    
+                    # Update final processed fields
+                    if entry.storage == str('Godown'):
+                        product.net_stock_processed -= entry.weight_out
+                        product.bags_processed -= entry.bags_out
+
+                        commodity.net_stock_processed -= entry.weight_out
+                        commodity.bags_processed -= entry.bags_out
+                        
+                    else:
+                        product.stock_cold -= entry.weight_out
+                        product.bags_cold -= entry.bags_out
+
+                        commodity.stock_cold -= entry.weight_out
+                        commodity.bags_cold -= entry.bags_out
+                        
+                # Update raw fields
+                else:
+                    if product.net_stock_raw - entry.weight_out < 0 and product.bags_raw - entry.bags_out < 0:
+                        context_dict = {'message': "First delete the final process entry for this product",
+                                        'super_user_form': super_user_form,
+                                        }
+                        return render(request, 'partal/superuser.html', context_dict)
+                
+                    else:
+                        
+                        product.net_stock_raw -= entry.weight_out
+                        product.bags_raw -= entry.bags_out
+
+                        commodity.net_stock_raw -= entry.weight_out
+                        commodity.bags_raw -= entry.bags_out 
+                
+                product.net_stock_raw += entry.weight_in
+                product.bags_raw += entry.bags_in
+
+                commodity.net_stock_raw += entry.weight_in
+                commodity.bags_raw += entry.bags_in                
+            
+                product.save()
+                commodity.save()
+
+                # Update pulse details
+                pulse_detial = Commodity.objects.get(name = 'Pulse')
+                
+                pulse_detial.net_stock_processed -= entry.pulse_weight
+                pulse_detial.bags_processed -= entry.pulse_bags
+
+                pulse_detial.save()
+                
+                # Update waste product details
+                reduce_waste_detail('Jhiri', entry.jhiri_weight, entry.jhiri_bags)
+                reduce_waste_detail('Danthal', entry.danthal_weight, entry.danthal_bags)
+                reduce_waste_detail('Stone', entry.stone_weight, entry.stone_bags)
+
+                entry.delete()
+                
+                # Redirect to make new entry
+                return HttpResponseRedirect('/partal/process/')
+
+            if (table == 'sale'):
+
+                # Fetch sale invoice entry
+                entry = SaleInvoice.objects.get(id = entry_id)
+                # Fetch client entry
+                client = Client.objects.get(name = entry.buyer.name)
+
+                # Update client data
+                client.net_sale_weight -= entry.weight
+                client.net_sale_amount -= entry.amount
+                client.save()
+
+                # Update commodity data
+                commodity = Commodity.objects.get(name = entry.family.name)
+                if (entry.storage == 'Godown'):
+                    commodity.net_stock_processed += entry.weight
+                    commodity.bags_processed += entry.bags
+
+                if (entry.storage == 'Cold'):
+                    commodity.stock_cold += entry.weight
+                    commodity.bags_cold += entry.bags
+
+                commodity.save()
+
+                # Update product data
+                if (entry.family.name != 'Pulse'):
+                    # Fetch sale invoice detail entries
+                    sale_details = SaleInvoiceDetail.objects.filter(invoice = entry)
+                    for detail in sale_details:
+                        product = Product.objects.get(name = detail.product.name)
+                        
+                        if (entry.storage == 'Godown'):
+                            product.net_stock_processed += detail.weight
+                            product.bags_processed += detail.bags
+
+                        if (entry.storage == 'Cold'):
+                            product.stock_cold += detail.weight
+                            product.bags_cold += detail.bags
+
+                        product.save()
+
+                entry.delete()
+
+                # Redirect to make new entry
+                return HttpResponseRedirect('/partal/sale/')
+
 
         # Not a post or delete request
         else:
@@ -880,12 +1004,13 @@ def sale_invoice(request):
     context_dict = {}
     sale_form = SaleForm()
     sale_detail_form = SaleDetailForm()
-
+    charges = RateDetail.objects.get(id = 1)
+        
     if request.method == 'POST':
 
         client = Client.objects.get(name = request.POST['buyer'])
         commodity = Commodity.objects.get(name = request.POST['family'])
-        charges = RateDetail.objects.get(id = 1)
+
         
         dict = {}
         for key in request.POST:
@@ -894,146 +1019,187 @@ def sale_invoice(request):
         
         date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
         dict.update({"date": date})
+
+        print request.POST
         
-        # Calculating Number of bags per entry
-        bags = []
-        b = 0
-        for _ in dict['weight']:
-            bag = float(_)/float(dict['bharti'][b])
+        if not request.POST['invoice_no'] or SaleInvoice.objects.filter(invoice_no = request.POST['invoice_no']).exists(): 
+
+            context_dict = {"message": "Please enter a valid invoice number.",
+                            "sale_form": sale_form,
+                            "sale_detail_form": sale_detail_form,
+                            "charges": charges,
+                            }
             
-            if bag % int(bag) >= 0.05:
-                bag = int(bag) + 1
-            else:
-                bag = int(bag)
+            return render(request, 'partal/sale.html', context_dict)
 
-            bags.append(bag)
-            b = b+1
-        dict.update({"bags": bags})
         
-        # Calculating Amount per entry
-        amounts = []
-        r = 0
-        for _ in dict['weight']:
-            amount = (float(_)*float(dict['rate'][r]))/100
+        if request.POST['storage'] == str('Godown'):
+            if commodity.net_stock_processed < float(request.POST['weight']) or commodity.bags_processed < int(request.POST['bags']):
+
+                context_dict = {'message': 'Insufficient Processed commodity',
+                                "sale_form": sale_form,
+                                "sale_detail_form": sale_detail_form,
+                                "charges": charges,
+                                }
+
+                return render(request, 'partal/sale.html', context_dict)
+
+        if request.POST['storage'] == str('Cold'):
+            if commodity.stock_cold < float(request.POST['weight']) or commodity.bags_cold < int(request.POST['bags']):
+
+                context_dict = {'message': 'Insufficient Processed commodity',
+                                "sale_form": sale_form,
+                                "sale_detail_form": sale_detail_form,
+                                "charges": charges,
+                                }
+
+                return render(request, 'partal/sale.html', context_dict)
             
-            amounts.append(amount)
-            r = r+1
-        dict.update({"amounts": amounts})
-        
-        # Calculate Net Amount and saving data
+        if request.POST['family'] != 'Pulse':
+            num = 0
+            for _ in dict['product']:
+                product = Product.objects.get(name = _)
+                if request.POST['storage'] == str('Godown'):
+                    if product.net_stock_processed < float(dict['product_weight'][num]) or product.bags_processed < int(dict['product_bags'][num]):
 
-        # Calculation Net Loose Amount
-        net_loose_amount = 0
-        for _ in dict['amounts']:
-            net_loose_amount = net_loose_amount + _
-        
-        # Calculating Total number of bags
-        total_bags = 0
-        for _ in dict['bags']:
-            total_bags = total_bags + _
-        # Updating Commodity Bags
-        if request.POST['storage'] == str('Godown'):
-           
-            commodity.bags_processed = commodity.bags_processed - total_bags
-            commodity.save()
+                        context_dict = {'message': 'Insufficient Processed product',
+                                        "sale_form": sale_form,
+                                        "sale_detail_form": sale_detail_form,
+                                        "charges": charges,
+                        }
 
-        else:
+                        return render(request, 'partal/sale.html', context_dict)
 
-            commodity.bags_cold = commodity.bags_cold - total_bags
-            commodity.save()
+                if request.POST['storage'] == str('Cold'):
+                    if product.stock_cold < float(dict['product_weight'][num]) or product.bags_cold < float(dict['product_bags'][num]):
+                        
+                        context_dict = {'message': 'Insufficient Processed product',
+                                        "sale_form": sale_form,
+                                        "sale_detail_form": sale_detail_form,
+                                        "charges": charges,
+                        }
 
-        # Calculating Total Weight in Kgs
-        net_weight = 0
-        for _ in dict['weight']:
-            net_weight = net_weight + float(_)
-        # Updating Client Net Weight
-        client.net_sale_weight = client.net_sale_weight + net_weight
-        client.save()
-        # Updating Commodity Net Stock
-        if request.POST['storage'] == str('Godown'):
-        
-            commodity.net_stock_processed = commodity.net_stock_processed - net_weight
-            commodity.save()
+                        return render(request, 'partal/sale.html', context_dict)
 
-        else:
+                num += 1
 
-            commodity.stock_cold = commodity.stock_cold - net_weight
-            commodity.save()
-
-        # Calculating Insurance
-        insurance = (net_loose_amount*charges.insurance)/100
-        
-        # Calculating VAT
-        VAT = (net_loose_amount*charges.VAT)/100
-        
-        # Calculating Net Amount
-        net_amount = net_loose_amount + VAT + insurance
-        
-        # Updating Client Net Amount
-        client.net_sale_amount = int(client.net_sale_amount) + net_amount
-        client.save()
         
         # Saving Sale Invoice
         sale_invoice = SaleInvoice(date = dict['date'],
                                    buyer = client,
+                                   firm = request.POST['firm'],
                                    invoice_no = request.POST['invoice_no'],
                                    family = commodity,
-                                   weight = net_weight,
-                                   bags = total_bags,
-                                   VAT = VAT,
-                                   insurance = insurance,
-                                   amount = net_amount)
+                                   storage = request.POST['storage'],
+                                   weight = request.POST['weight'],
+                                   bags = request.POST['bags'],
+                                   net_loose_amount = request.POST['net_loose_amount'],
+                                   VAT = request.POST['VAT'],
+                                   insurance = request.POST['insurance'],
+                                   amount = request.POST['amount'],
+                                   narration = request.POST['narration'])
         sale_invoice.save()
 
         # Updating Product Data and  Sale Inovice Detail
-        num = 0
-        for _ in dict['product']:
-            # Product Data
-            product = Product.objects.get(name = _)
-            if request.POST['storage'] == str('Godown'):
-           
-                product.net_stock_processed = product.net_stock_processed - float(dict['weight'][num])
-                product.bags_processed = product.bags_processed + dict['bags'][num]
-                product.save()
-            else:
+        if request.POST['family'] != 'Pulse':
+            num = 0
+            for _ in dict['product']:
+                product = Product.objects.get(name = _)
+                # Sale Invouce Detail
+                sale_invoice_detail = SaleInvoiceDetail(invoice = sale_invoice,
+                                                        product = product,
+                                                        weight = dict[
+                                                            'product_weight'][num],
+                                                        rate = dict['product_rate'][num],
+                                                        bags = dict['product_bags'][num],
+                                                        amount = dict[
+                                                            'product_amount'][num],)
+                sale_invoice_detail.save()
+            
+                # Product Data
+                if request.POST['storage'] == str('Godown'):
+                    
+                    product.net_stock_processed -= float(dict['product_weight'][num])
+                    product.bags_processed -= int(dict['product_bags'][num])
                 
-                product.stock_cold = product.stock_cold - float(dict['weight'][num])
-                product.bags_cold = product.bags_cold + dict['bags'][num]
+                if request.POST['storage'] == str('Cold'):
+                    
+                    product.stock_cold -= float(dict['product_weight'][num])
+                    product.bags_cold -= float(dict['product_bags'][num])
+
+                if product.net_stock_processed < 0 or product.bags_processed < 0 or product.stock_cold < 0 or product.bags_cold < 0:
+
+                    sale_invoice.delete()
+
+                    if num > 0:
+                        itr = 0
+                        for val in dict['product']:
+                            saved_product = Product.objects.get(name = val)
+                            if itr != num:
+                                if request.POST['storage'] == str('Godown'):
+                                    
+                                    saved_product.net_stock_processed += float(
+                                        dict['product_weight'][itr])
+                                    saved_product.bags_processed += int(
+                                        dict['product_bags'][itr])
+                                    
+                                if request.POST['storage'] == str('Cold'):
+                                    
+                                    saved_product.stock_cold += float(
+                                        dict['product_weight'][itr])
+                                    saved_product.bags_cold += float(
+                                        dict['product_bags'][itr])
+
+                                saved_product.save()
+                            
+                            itr += 1
+
+                            
+                    context_dict = {'message': 'Insufficient Processed product',
+                                    "sale_form": sale_form,
+                                    "sale_detail_form": sale_detail_form,
+                                    "charges": charges,
+                    }
+
+                    return render(request, 'partal/sale.html', context_dict)
+                
                 product.save()
 
-            # Sale Invouce Detail
-            sale_invoice_detail = SaleInvoiceDetail(invoice = sale_invoice,
-                                                    product = product,
-                                                    weight = dict['weight'][num],
-                                                    bharti = dict['bharti'][num],
-                                                    rate = dict['rate'][num],
-                                                    bags = dict['bags'][num],
-                                                    amount = dict['amounts'][num],
-                                                    )
-            sale_invoice_detail.save()
-            num =num + 1
+                num += 1
+        
+        # Updating Commodity details
+        if request.POST['storage'] == str('Godown'):
+
+            commodity.net_stock_processed -= float(request.POST['weight'])
+            commodity.bags_processed -= int(request.POST['bags'])
+
+        if request.POST['storage'] == str('Cold'):
+
+            commodity.stock_cold -= float(request.POST['weight'])
+            commodity.bags_cold -= int(request.POST['bags'])
+            
+        commodity.save()
+
+        # Updating Client details
+        client.net_sale_weight += float(request.POST['weight'])
+        client.net_sale_amount += int(request.POST['amount'])
+        client.save()
         
         
-        context_dict = {
-            "invoice_no": sale_invoice.invoice_no,
-            "name": request.POST['buyer'],
-            "commodity":request.POST['family'],
-            "products": dict['product'],
-            "weights": dict['weight'],
-            "bags": dict['bags'],
-            "rates": dict['rate'],
-            "amounts": dict['amounts'],
-            "net_loose_amount": net_loose_amount,
-            "insurance": insurance,
-            "VAT": VAT,
-            "net_amount": net_amount,
-            }
+        context_dict = {"message": "Sale invoice saved.",
+                        "sale_form": sale_form,
+                        "sale_detail_form": sale_detail_form,
+                        "charges": charges,
+                        }
+        
         return render(request, 'partal/sale.html', context_dict)
                     
     else:
         # Not a POST Request
         context_dict = {"sale_form": sale_form,
-                        "sale_detail_form": sale_detail_form}
+                        "sale_detail_form": sale_detail_form,
+                        "charges": charges,
+                        }
 
         return render(request, 'partal/sale.html', context_dict)
 
@@ -1049,64 +1215,159 @@ def process_entry(request):
     if request.method == 'POST':
 
         date = request.POST['date_year'] + "-" + request.POST['date_month'] + "-" + request.POST['date_day']
+        final_out = request.POST.get('final_out', False)
         product = Product.objects.get(name = request.POST['product'])
         commodity = Commodity.objects.get(name = product.commodity.name)
         
-        if product.net_stock_raw >= request.POST['weight_in'] and product.bags_raw >= request.POST['bags_in']:
+        if product.net_stock_raw >= float(request.POST['weight_in']) and product.bags_raw >= int(request.POST['bags_in']):
+
+            print final_out
 
             # Saving Entry Data
             new_entry = ProcessEntry(date = date,
                                      product = product,
                                      process = request.POST['process'],
+                                     final_out = final_out,
                                      weight_in = request.POST['weight_in'],
                                      bags_in = request.POST['bags_in'],
                                      weight_out = request.POST['weight_out'],
-                                     bags_out = request.POST['weight_out'],
+                                     bags_out = request.POST['bags_out'],
+                                     pulse_weight = request.POST['pulse_weight'],
+                                     pulse_bags = request.POST['pulse_bags'],
+                                     jhiri_weight = request.POST['jhiri_weight'],
+                                     jhiri_bags = request.POST['jhiri_bags'],
+                                     danthal_weight = request.POST['danthal_weight'],
+                                     danthal_bags = request.POST['danthal_bags'],
+                                     stone_weight = request.POST['stone_weight'],
+                                     stone_bags = request.POST['stone_bags'],
+                                     short_weight = request.POST['short_weight'],
+                                     percentage_out = request.POST['percentage_out'],
                                      storage = request.POST['storage'],
                                      )
             new_entry.save()
             
             # Updating Product
-            product.net_stock_raw = product.net_stock_raw - request.POST['weight_in']
-            product.bags_raw = product.bags_raw - request.POST['bags_in']
-            if request.POST['storage'] == str('Godown'):
-                product.net_stock_processed = product.net_stock_processed + request.POST['weight_out']
-                product.bags_processed = product.bags_processed + request.POST['bags_out']
+            product.net_stock_raw -= float(request.POST['weight_in'])
+            product.bags_raw -= int(request.POST['bags_in'])
 
+            # Checking if product is dispatch ready 
+            if final_out:
+                # Update final processed fields
+                if request.POST['storage'] == str('Godown'):
+                    product.net_stock_processed += float(request.POST['weight_out'])
+                    product.bags_processed += int(request.POST['bags_out'])
+
+                else:
+                    product.stock_cold += float(request.POST['weight_out'])
+                    product.bags_cold += int(request.POSt['bags_out'])
+
+            # Update raw fields
             else:
-                product.stock_cold = product.stock_cold + request.POST['weight_out']
-                product.bags_cold = product.bags_cold + request.POSt['bags_out']
+                product.net_stock_raw += float(request.POST['weight_out'])
+                product.bags_raw += int(request.POST['bags_out'])
+
             product.save()
-            
+                
             # Updating Commodity
-            commodity.net_stock_raw = commodity.net_stock_raw - request.POST['weight_in']
-            commodity.bags_raw = commodity.bags_raw - request.POST['bags_in']
-            if request.POST['storage'] == str('Godown'):
-                commodity.net_stock_processed = commodity.net_stock_processed + request.POST['weight_out']
-                commodity.bags_processed = commodity.bags_processed + request.POST['bags_out']
+            commodity.net_stock_raw -= float(request.POST['weight_in'])
+            commodity.bags_raw -= int(request.POST['bags_in'])
+
+            # Checking if product is dispatch ready 
+            if final_out:
+                # Update final processed fields
+                if request.POST['storage'] == str('Godown'):
+                    commodity.net_stock_processed += float(request.POST['weight_out'])
+                    commodity.bags_processed += int(request.POST['bags_out'])
+                else:
+                    commodity.stock_cold += float(request.POST['weight_out'])
+                    commodity.bags_cold += int(request.POST['bags_out'])
 
             else:
-                commodity.stock_cold = commodity.stock_cold + request.POST['weight_out']
-                commodity.bags_cold = commodity.bags_cold + request.POST['bags_out']
+                
+                commodity.net_stock_raw += float(request.POST['weight_out'])
+                commodity.bags_raw += int(request.POST['bags_out'])
+
             commodity.save()
 
-            process_entry_form = ProductEntryForm()
+            # Update pulse weight and bags
+            try:
+                pulse_detial = Commodity.objects.get(name = 'Pulse')
+
+            except Commodity.DoesNotExist:
+
+                pulse_detial = Commodity(name = 'Pulse',
+                                         net_stock_processed = request.POST['pulse_weight'],
+                                         bags_processed = request.POST['pulse_bags'],
+                                         )
+                pulse_detial.save()
+
+            else:
+
+                pulse_detial.net_stock_processed += float(request.POST['pulse_weight'])
+                pulse_detial.bags_processed += int(request.POST['pulse_bags'])
+
+                pulse_detial.save()
+
+            
+            # Update waste products
+            update_waste_product('Jhiri', float(request.POST['jhiri_weight']),
+                                 int(request.POST['jhiri_bags']))
+            update_waste_product('Danthal', float(request.POST['danthal_weight']),
+                                 int(request.POST['danthal_bags']))
+            update_waste_product('Stone', float(request.POST['stone_weight']),
+                                 int(request.POST['stone_bags']))
+
+            process_entry_form = ProcessEntryForm()
             context_dict = {"message": "Entry Added",
-                            "process_entry_form": process_entry_form}
+                            "process_form": process_entry_form}
             
             return render(request, 'partal/process.html', context_dict)
 
         else:
             # Invalid Data
-            context_dict = {"message": "Raw stock is less"}
+            context_dict = {"message": "Raw stock for " + product.name + " is less",
+                            "process_form": process_entry_form,
+                            }
             return render(request, 'partal/process.html', context_dict)
 
     else:
         # Not a POST Request
-        context_dict = {"process_entry_form": process_entry_form}
+        context_dict = {"process_form": process_entry_form}
 
         return render(request, 'partal/process.html', context_dict)
 
 
+# Function to update waste products
+def update_waste_product(waste, waste_weight, waste_bags):
+
+    try:
+        waste = WasteProduct.objects.get(name = waste)
+
+    except WasteProduct.DoesNotExist:
+
+        waste = WasteProduct(name = waste,
+                          weight = waste_weight,
+                          bags = waste_bags,
+                          )
         
+        waste.save()
+
+    else:
+
+        waste.weight += waste_weight
+        waste.bags += waste_bags
+
+        waste.save()
+
+
+# Reduce waste product data
+def reduce_waste_detail(waste, waste_weight, waste_bags):
+
+    waste = WasteProduct.objects.get(name = waste)
+
+    waste.weight -= waste_weight
+    waste.bags -= waste_bags
+    
+    waste.save()
+
         

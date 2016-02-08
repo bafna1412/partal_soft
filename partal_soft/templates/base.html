@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
   </head>
-  <body style="padding-top:60px">
+  <body style="padding-top:10px">
     <!-- {% cms_toolbar %} -->
-        <div class="container">
+    <div class="container">
+      <h2>Partal Register</h2> <br />
           <div class="navbar navbar-default" role="navigation">
             <div class="navbar-header">
               <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -21,13 +22,13 @@
                 <span class="icon-bar"></span>
               </button>
               
-	      <a class="navbar-brand">Partal Register</a>
-              {% if user.is_authenticated %}
+	      {% if user.is_authenticated %}
 	      <a class="navbar-brand" href="/partal/home/">Home</a>
 	      <a class="navbar-brand" href="/partal/firm/">Merchant Registration</a>
 	      <a class="navbar-brand" href="/partal/commodity/">Commodity</a>
 	      <a class="navbar-brand" href="/partal/product/">Product</a>
 	      <a class="navbar-brand" href="/partal/purchase/">Purchase</a>
+	      <a class="navbar-brand" href="/partal/process/">Process</a>
 	      <a class="navbar-brand" href="/partal/estimatesale/">Sale</a>
 	      <a class="navbar-brand" href="/partal/viewtds/">Summary</a>
 	      <a class="navbar-brand" href="/partal/superuser/all/open/0/">

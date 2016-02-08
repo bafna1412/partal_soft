@@ -53,26 +53,42 @@ def export_as_csv(description = "Download selected rows as CSV file", header = T
     return export_as_csv
 
 
+def clear_commission(modeladmin, request, queryset):
+    
+    queryset.update(net_commission_APB = 0.0, net_commission_KY = 0.0)
+    
+clear_commission.short_description = 'Clear Commission' 
+
+
 # Register your models here.
 
-class FirmAdmin(admin.ModelAdmin):
+class FirmAdmin(TotalsumAdmin):
     
     list_display = ('name', 'group', 'address', 'contact_number', 'PAN', 'TIN', 'net_commission_APB', 'net_commission_KY', 'net_purchase_weight', 'net_purchase_amount')
-    actions = [export_as_csv('Export as CSV')]
+    totalsum_list = ('net_commission_APB', 'net_commission_KY', 'net_purchase_weight',
+                     'net_purchase_amount')
+    list_filter = ('group',)
+
+    actions = [export_as_csv('Export as CSV'), clear_commission]
     
-class ClientAdmin(admin.ModelAdmin):
+class ClientAdmin(TotalsumAdmin):
 
     list_display = ('name', 'address', 'contact_number', 'PAN', 'TIN', 'net_sale_weight', 'net_sale_amount')
+    totalsum_list = ('net_sale_weight', 'net_sale_amount')
     actions = [export_as_csv('Export as CSV')]
     
-class CommodityAdmin(admin.ModelAdmin):
+class CommodityAdmin(TotalsumAdmin):
 
     list_display = ('name', 'net_stock_raw', 'bags_raw', 'net_stock_processed', 'bags_processed', 'stock_cold', 'bags_cold')
+    totalsum_list = ('net_stock_raw', 'bags_raw', 'net_stock_processed',
+                     'bags_processed', 'stock_cold', 'bags_cold')
     actions = [export_as_csv('Export as CSV')]
     
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(TotalsumAdmin):
 
     list_display = ('name', 'family', 'net_stock_raw', 'bags_raw', 'net_stock_processed', 'bags_processed', 'stock_cold', 'bags_cold')
+    totalsum_list = ('net_stock_raw', 'bags_raw', 'net_stock_processed',
+                     'bags_processed', 'stock_cold', 'bags_cold')
     actions = [export_as_csv('Export as CSV')]
     
 class RateDetailAdmin(admin.ModelAdmin):
@@ -104,20 +120,50 @@ class DailyPurchaseAdmin(TotalsumAdmin):
     totalsum_list = ('product_weight', 'product_bags', 'total_purchase_amount')
     actions = [export_as_csv('Export as CSV')]
     
-class SaleInvoiceAdmin(admin.ModelAdmin):
+class SaleInvoiceAdmin(TotalsumAdmin):
 
-    list_display = ('date', 'client', 'invoice_no', 'commodity', 'weight', 'bags', 'VAT', 'insurance', 'amount')
+    list_display = ('date', 'client','firm', 'invoice_no', 'commodity', 'storage',
+                    'weight', 'bags','net_loose_amount', 'VAT', 'insurance',
+                    'amount', 'narration')
+    list_filter = ('date', 'firm', 'buyer__name', 'family__name', 'storage')
+    search_fields = ['date']
+    totalsum_list = ('weight', 'bags', 'net_loose_amount', 'VAT', 'insurance', 'amount')
+    
     actions = [export_as_csv('Export as CSV')]
     
-class SaleInvoiceDetailAdmin(admin.ModelAdmin):
+class SaleInvoiceDetailAdmin(TotalsumAdmin):
 
-    list_display = ('invoice_no', 'product_type', 'client', 'weight', 'rate', 'bags', 'amount')
+    list_display = ('invoice_no', 'invoice_date', 'client', 'product_type', 'weight', 'rate', 'bags', 'amount')
+    list_filter = ('invoice__date', 'invoice__buyer__name', 'product__name')
+    search_fields = ['invoice__date']
+    totalsum_list = ('weight', 'bags', 'amount')
+    
     actions = [export_as_csv('Export as CSV')]
     
-class ProcessEntryAdmin(admin.ModelAdmin):
+class ProcessEntryAdmin(TotalsumAdmin):
 
-    list_display = ('date', 'product_type', 'process', 'weight_in', 'bags_in', 'weight_out', 'bags_out', 'storage')
+    list_display = ('date', 'product', 'process', 'final_out', 'weight_in', 'bags_in',
+                    'weight_out', 'bags_out', 'pulse_weight', 'pulse_bags',
+                    'jhiri_weight', 'jhiri_bags', 'danthal_weight', 'danthal_bags',
+                    'stone_weight', 'stone_bags', 'short_weight',
+                    'percentage_out', 'storage')
+
+    list_filter = ('date', 'product__name', 'process', 'final_out', 'storage')
+    search_fields = ['date']
+    totalsum_list = ('weight_in', 'bags_in', 'weight_out', 'bags_out','pulse_weight',
+                     'pulse_bags', 'jhiri_weight', 'jhiri_bags', 'danthal_weight',
+                     'danthal_bags', 'stone_weight', 'stone_bags', 'short_weight',
+                     'total_purchase_amount')
     actions = [export_as_csv('Export as CSV')]
+
+
+class WasteProductAdmin(TotalsumAdmin):
+
+    list_display = ('name', 'weight', 'bags')
+
+    list_filter = ('name',)
+    totalsum_list = ('weight', 'bags')
+    actions = [export_as_csv('Export_As_CSV')]
     
 
 
@@ -132,3 +178,4 @@ admin.site.register(DailyPurchase, DailyPurchaseAdmin)
 admin.site.register(SaleInvoice, SaleInvoiceAdmin)
 admin.site.register(SaleInvoiceDetail, SaleInvoiceDetailAdmin)
 admin.site.register(ProcessEntry, ProcessEntryAdmin)
+admin.site.register(WasteProduct, WasteProductAdmin)

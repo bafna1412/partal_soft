@@ -7,8 +7,8 @@ from partal.models import *
 import datetime
 
 PROCESS_CHOICES = (
-    ('Taati Chanai', 'Taati Chanai'), ('Machine Clean', 'Machine Clean'),
-    ('Chanai & Machine Clean', 'Chanai & Machine Clean'), ('Dry', 'Dry'),
+    ('Sun Dry', 'Sun Dry'), ('Simple Clean', 'Simple Clean'),
+    ('Semi Machine Clean', 'Semi Machine Clean'), ('Machine Clean', 'Machine Clean'),
     )
 
 STORAGE_CHOICES = (
@@ -20,7 +20,8 @@ FIRM_CHOICES = (
     )
 
 TABLE_CHOICES = (
-    ('invoice', 'Purchase Invoice'), ('detail', 'Purchase Detail')
+    ('invoice', 'Purchase Invoice'), ('detail', 'Purchase Detail'),
+    ('process', 'Process Detail'), ('sale', 'Sale Invoice'),
     )
 
 
@@ -33,11 +34,18 @@ class FirmForm(forms.ModelForm):
     contact_number = forms.CharField(help_text = "Contact Number", required = True, max_length = 11)
     PAN = forms.CharField(help_text = "PAN Number", max_length = 10)
     TIN = forms.CharField(help_text = "TIN Number", required = True, max_length = 11)
+    net_commission_APB = forms.FloatField(help_text = "Net Commission APB",
+                                          required = True, min_value = 0.0,
+                                          initial = 0.0)
+    net_commission_KY = forms.FloatField(help_text = "Net Commission KY",
+                                          required = True, min_value = 0.0,
+                                          initial = 0.0)
     
     class Meta:
         
         model = Firm
-        fields = ('name', 'group', 'address', 'contact_number', 'PAN', 'TIN')
+        fields = ('name', 'group', 'address', 'contact_number', 'PAN', 'TIN',
+                  'net_commission_APB', 'net_commission_KY')
 
 
 # Commodity registration form
@@ -190,18 +198,52 @@ class SaleForm(forms.ModelForm):
                            widget = SelectDateWidget)
     
     buyer = forms.ModelChoiceField(help_text = "Client Name", required = True,
-                                    queryset = Client.objects.values_list('name', flat=True))
+                                    queryset = Client.objects.values_list('name', flat=True), empty_label = None)
+
+    firm = forms.TypedChoiceField(help_text = "Billed Firm", required = True,
+                                   choices = FIRM_CHOICES)
+    
     invoice_no = forms.CharField(help_text = "Invoice No.", max_length = 10, required = True)
 
     family = forms.ModelChoiceField(help_text = "Commodity Type", required = True,
-                                    queryset = Commodity.objects.values_list('name', flat=True))
+                                    queryset = Commodity.objects.all(),
+                                    empty_label = None)
+    
     storage = forms.TypedChoiceField(help_text = "Storage", required = True,
                                      choices = STORAGE_CHOICES)
+    weight = forms.FloatField(help_text = "Total Weight", required = True,
+                              min_value = 0.0, initial = 0.0,
+                              widget=forms.TextInput(attrs={'readonly':'readonly'}))
+
+    bags = forms.IntegerField(help_text = "Total Bags", required = True, min_value = 0,
+                              initial = 0,
+                              widget=forms.TextInput(attrs={'readonly':'readonly'}))
+
+    net_loose_amount = forms.FloatField(help_text = "Net Loose Amount", required = True,
+                                        min_value = 0.0, initial = 0.0,
+                                        widget=forms.TextInput(attrs=
+                                                               {'readonly':'readonly'}))
+
+    VAT = forms.FloatField(help_text = "VAT", required = True, min_value = 0.0,
+                           initial = 0.0,
+                           widget=forms.TextInput(attrs={'readonly':'readonly'}))
+
+    insurance = forms.FloatField(help_text = "Insurance", required = True,
+                                 widget=forms.TextInput(attrs={'readonly':'readonly'}),
+                                 initial = 0.0, min_value = 0.0)
+
+    amount = forms.FloatField(help_text = "Net Amount", required = True, min_value = 0.0,
+                              initial = 0.0,
+                              widget=forms.TextInput(attrs={'readonly':'readonly'}))
+
+    narration = forms.CharField(help_text = "Narration", required = False, widget = forms.Textarea)
     
     class Meta:
 
         model = SaleInvoice
-        fields = ('date', 'buyer', 'invoice_no', 'family', 'storage')
+        fields = ('date', 'buyer', 'firm', 'invoice_no', 'family', 'storage',
+                  'weight', 'bags', 'net_loose_amount', 'VAT', 'insurance',
+                  'amount', 'narration')
 
 
 
@@ -209,37 +251,71 @@ class SaleForm(forms.ModelForm):
 class SaleDetailForm(forms.ModelForm):
 
     product =  forms.ModelChoiceField(help_text = "Product", required = True,
-                                      queryset = Product.objects.values_list('name', flat=True))
-    weight = forms.FloatField(help_text = "Product Weight (Kg)", required = True, min_value = 0.0)
-    bags = forms.IntegerField(help_text = "No. of bags", required = True, min_value = 0)
-    rate = forms.IntegerField(help_text = "Product Rate (for Qtl)", required = True, min_value = 0)
+                                      queryset = Product.objects.values_list(
+                                          'name', flat=True), empty_label = None)
+    product_weight = forms.FloatField(help_text = "Product Weight (Kg)",
+                                      widget=forms.TextInput(
+                                          attrs={'class':'per_weight'}),
+                                      required = True, min_value = 0.0, initial = 0.0)
+    product_bags = forms.IntegerField(help_text = "No. of bags", required = True,
+                                      widget=forms.TextInput(attrs={'class':'per_bags'}),
+                                      min_value = 0, initial = 0)
+    product_rate = forms.IntegerField(help_text = "Product Rate (for Qtl)",
+                                      widget=forms.TextInput(attrs={'class':'per_rate'}),
+                                      required = True, min_value = 0, initial = 0)
+    product_amount = forms.FloatField(help_text = "Amount", required = True,
+                                      min_value = 0.0, initial = 0.0,
+                                      widget=forms.TextInput(attrs={
+                                          'readonly':'readonly',
+                                          'class': 'per_amount'}))
     
     class Meta:
 
         model = SaleInvoiceDetail
-        fields = ('product', 'weight', 'bags', 'rate')
+        fields = ('product', 'product_weight', 'product_bags',
+                  'product_rate', 'product_amount')
 
 
 
 # Process entry form
 class ProcessEntryForm(forms.ModelForm):
 
-    date = forms.DateField(help_text = "Invoice Date", initial = datetime.date.today, required = True,
+    date = forms.DateField(help_text = "Process Date", initial = datetime.date.today, required = True,
                            widget = SelectDateWidget)
     product =  forms.ModelChoiceField(help_text = "Product", required = True,
-                                      queryset = Product.objects.values_list('name', flat=True))
+                                      queryset = Product.objects.values_list('name', flat=True), empty_label = None)
     process = forms.TypedChoiceField(help_text = "Name of Process", required = True,
                                      choices = PROCESS_CHOICES)
-    weight_in = forms.FloatField(help_text = "Raw Weight (Kg)", required = True, min_value = 0.0)
-    bags_in = forms.IntegerField(help_text = "Raw Bags", required = True, min_value = 0)
-    weight_out = forms.FloatField(help_text = "Processed Weight (Kg)", required = True, min_value = 0.0)
-    bags_out = forms.IntegerField(help_text = "Processed Bags", required = True, min_value = 0)
+    final_out = forms.BooleanField(help_text = "Dispatch Ready Product",
+                                   required = False, initial = False)
+    weight_in = forms.FloatField(help_text = "Raw Weight (Kg)", required = True, min_value = 0.0, initial = 0.0)
+    bags_in = forms.IntegerField(help_text = "Raw Bags", required = True, min_value = 0,
+                                 initial = 0)
+    weight_out = forms.FloatField(help_text = "Processed Weight (Kg)", required = True, min_value = 0.0, initial = 0.0)
+    bags_out = forms.IntegerField(help_text = "Processed Bags", required = True, min_value = 0, initial = 0)
+    pulse_weight = forms.FloatField(help_text = "Pulse Weight (Kg)", required = True, min_value = 0.0, initial = 0.0)
+    pulse_bags = forms.IntegerField(help_text = "Pulse Bags", required = True, min_value = 0, initial = 0)
+    jhiri_weight = forms.FloatField(help_text = "Jhiri Weight (Kg)", required = True, min_value = 0.0, initial = 0.0)
+    jhiri_bags = forms.IntegerField(help_text = "Jhiri Bags", required = True, min_value = 0, initial = 0)
+    danthal_weight = forms.FloatField(help_text = "Danthal Weight (Kg)", required = True, min_value = 0.0, initial = 0.0)
+    danthal_bags = forms.IntegerField(help_text = "Danthal Bags", required = True, min_value = 0, initial = 0)
+    stone_weight = forms.FloatField(help_text = "Stone Weight (Kg)", required = True, min_value = 0.0, initial = 0.0)
+    stone_bags = forms.IntegerField(help_text = "Stone Bags", required = True, min_value = 0, initial = 0)
+    short_weight = forms.FloatField(help_text = "Weight Shortage (Kg)", required = True,
+                                    initial = 0.0)
+    percentage_out = forms.FloatField(help_text = "Percentage Output", required = True,
+                                      min_value = 0.0, initial = 0.0,
+                                      widget=forms.TextInput(attrs={'readonly':'readonly'
+                                      }))
     storage = forms.TypedChoiceField(help_text = "Storage", required = True,
                                      choices = STORAGE_CHOICES)
     class Meta:
         
         model = ProcessEntry
-        fields = ('date', 'product', 'process', 'weight_in', 'bags_in', 'weight_out', 'bags_out')
+        fields = ('date', 'product', 'process', 'final_out', 'weight_in', 'bags_in',
+                  'weight_out', 'bags_out', 'pulse_weight', 'pulse_bags', 'jhiri_weight',
+                  'jhiri_bags', 'danthal_weight', 'danthal_bags', 'stone_weight',
+                  'stone_bags', 'short_weight', 'percentage_out', 'storage')
 
 
 

@@ -6,19 +6,130 @@
 
   <form class = "form-signin span4" id="process_form" method= "post" action= "/en/partal/process/">
     <h2 class = "form-signin-heading">Process Entry</h2>
+    {{ message }}<br />
+    
     {% csrf_token %}
 
     <!-- Display each form -->
-    {% for field in process_entry_form.visible_fields %}
-    {{ field.errors }}
-    {{ field.help_text }}<br />
-    {{ field }}<br />
-    {% endfor %}
+    {{ process_form.date.help_text }}<br />
+    {{ process_form.date }}
+    {{ process_form.date.errors }}<br />
+
+    {{ process_form.product.help_text }}<br />
+    {{ process_form.product }}
+    {{ process_form.product.errors }}<br />
+
+    {{ process_form.process.help_text }}<br />
+    {{ process_form.process }}
+    {{ process_form.process.errors }}<br />
+    <br />
+    {{ process_form.final_out }}
+    {{ process_form.final_out.help_text }}<br />
+    {{ process_form.final_out.errors }}<br />
+    
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.weight_in.help_text }}<br />
+	{{ process_form.weight_in }}<br />
+	{{ process_form.weight_in.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.bags_in.help_text }}<br />
+	{{ process_form.bags_in }}<br />
+	{{ process_form.bags_in.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.weight_out.help_text }}<br />
+	{{ process_form.weight_out }}<br />
+	{{ process_form.weight_out.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.bags_out.help_text }}<br />
+	{{ process_form.bags_out }}<br />
+	{{ process_form.bags_out.errors }}
+      </div>
+    </div>
+    <br />
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.pulse_weight.help_text }}<br />
+	{{ process_form.pulse_weight }}<br />
+	{{ process_form.pulse_weight.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.pulse_bags.help_text }}<br />
+	{{ process_form.pulse_bags }}<br />
+	{{ process_form.pulse_bags.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.jhiri_weight.help_text }}<br />
+	{{ process_form.jhiri_weight }}<br />
+	{{ process_form.jhiri_weight.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.jhiri_bags.help_text }}<br />
+	{{ process_form.jhiri_bags }}<br />
+	{{ process_form.jhiri_bags.errors }}
+      </div>
+    </div>
+    <br />
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.danthal_weight.help_text }}<br />
+	{{ process_form.danthal_weight }}<br />
+	{{ process_form.danthal_weight.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.danthal_bags.help_text }}<br />
+	{{ process_form.danthal_bags }}<br />
+	{{ process_form.danthal_bags.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.stone_weight.help_text }}<br />
+	{{ process_form.stone_weight }}<br />
+	{{ process_form.stone_weight.errors }}
+      </div>
+      <div class="column" style="width: 25%; float: left;">
+	{{ process_form.stone_bags.help_text }}<br />
+	{{ process_form.stone_bags }}<br />
+	{{ process_form.stone_bags.errors }}
+      </div>
+    </div>
+    <br />
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 50%; float: left;">
+	{{ process_form.short_weight.help_text }}<br />
+	{{ process_form.short_weight }}<br />
+	{{ process_form.short_weight.errors }}
+      </div>
+      <div class="column" style="width: 50%; float: left;">
+	{{ process_form.percentage_out.help_text }}<br />
+	{{ process_form.percentage_out }}<br />
+	{{ process_form.percentage_out.errors }}
+      </div>
+    </div>
+	
+    <br />
+    
+    {{ process_form.storage.help_text }}<br />
+    {{ process_form.storage }}
+    {{ process_form.storage.errors }}<br />
     
     <br />
     <!-- Provide a click to submit the form -->
     <input type = "submit" name = "submit" value = "Submit" />
   </form>  
 </div>
+
+<script src = "/static/js/jquery-2.1.1.js"></script>
+
+<script>
+  $("#id_weight_in, #id_weight_out, #id_pulse_weight, #id_jhiri_weight, #id_danthal_weight, #id_stone_weight").change(function(){
+  var percentage_out = ($("#id_weight_out").val()/$("#id_weight_in").val())*100;
+  var short_weight = parseFloat($("#id_weight_in").val()) - (parseFloat($("#id_weight_out").val()) + parseFloat($("#id_pulse_weight").val()) + parseFloat($("#id_jhiri_weight").val()) + parseFloat($("#id_danthal_weight").val()) + parseFloat($("#id_stone_weight").val()));
+  $("#id_short_weight").val(short_weight.toFixed(2));
+  $("#id_percentage_out").val(percentage_out.toFixed(2));
+  })
+</script>
 
 {% endblock %}
