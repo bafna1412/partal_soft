@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}  
+
+<div class = "container">
+
+  <form class = "form-signin span4" id="sale_form" method= "post" action= "/en/partal/sale/">
+    <h2 class = "form-signin-heading">Sale Invoice</h2>
+    {% csrf_token %}
+    
+    <!-- Display each form -->
+    {{ sale_form.date.help_text }}<br />
+    {{ sale_form.date }}
+    {{ sale_form.date.errors }}<br />
+    
+    {{ sale_form.buyer.help_text }}<br />
+    {{ sale_form.buyer }}
+    {{ sale_form.buyer.errors }}<br />
+
+    {{ sale_form.firm.help_text }}<br />
+    {{ sale_form.firm }}
+    {{ sale_form.firm.errors }}<br />
+    
+    {{ sale_form.invoice_no.help_text }}<br />
+    {{ sale_form.invoice_no }}
+    {{ sale_form.invoice_no.errors }}<br />
+    
+    {{ sale_form.family.help_text }}<br />
+    {{ sale_form.family }}
+    {{ sale_form.family.errors }}<br />
+    
+    {{ sale_form.storage.help_text }}<br />
+    {{ sale_form.storage }}
+    {{ sale_form.storage.errors }}<br />
+    
+    <br />
+    
+    <table id="dataTable" width="1000px">
+      <tbody><tr>
+	  <div class="multicolumn3 clearfix">
+	    <td><input type="checkbox" name="chk"></td>
+	    {% for field in sale_detail_form.visible_fields %}
+	    <div class="column" style="width: 25%; float: left;">
+	      <td>{{ field.errors }}
+		{{ field.help_text }}<br />
+		{{ field }}<td><br />
+	    </div>
+	    {% endfor %}
+	  </div>
+	</tr>
+    </tbody></table>
+    <p align = "right">
+      <input type="button" value="Add Row" onclick="addRow('dataTable')">
+      <input type="button" value="Delete Row" onclick="deleteRow('dataTable')">
+    </p>
+    <br />
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 20%; float: left;">
+	<br />
+      </div>
+      <div class="column" style="width: 20%; float: left;">
+	{{ sale_form.weight.errors }}
+	{{ sale_form.weight }}<br />
+	{{ sale_form.weight.help_text }}<br />
+      </div>
+      <div class="column" style="width: 20%; float: left;">	
+	{{ sale_form.bags.errors }}
+	{{ sale_form.bags }}<br />
+	{{ sale_form.bags.help_text }}<br />
+      </div>
+      <div class="column" style="width: 20%; float: left;">	
+	{{ sale_form.net_loose_amount.errors }}
+	{{ sale_form.net_loose_amount }}<br />
+	{{ sale_form.net_loose_amount.help_text }}<br />
+      </div>
+    </div>
+    <br />
+    <div class="multicolumn3 clearfix">
+      <div class="column" style="width: 25%; float: left;">	
+	<br />
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ sale_form.VAT.errors }}
+	{{ sale_form.VAT.help_text }}<br />
+	{{ sale_form.VAT }}<br />
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ sale_form.insurance.errors }}
+	{{ sale_form.insurance.help_text }}<br />
+	{{ sale_form.insurance }}<br />
+      </div>
+      <div class="column" style="width: 25%; float: left;">	
+	{{ sale_form.amount.errors }}
+	{{ sale_form.amount.help_text }}<br />
+	{{ sale_form.amount }}<br />
+      </div>
+    </div>
+
+    {{ sale_form.narration.errors }}
+    {{ sale_form.narration.help_text }}<br />
+    {{ sale_form.narration }}<br />
+      
+    
+    <!-- Provide a click to submit the form -->
+    <input type = "submit" name = "submit" value = "Submit" />
+  </form>
+</div>
+
+
+<script language="javascript">function addRow(tableID){var table=document.getElementById(tableID);var rowCount=table.rows.length;var row=table.insertRow(rowCount);var colCount=table.rows[0].cells.length;for(var i=0;i<colCount;i++){var newcell=row.insertCell(i);newcell.innerHTML=table.rows[0].cells[i].innerHTML;switch(newcell.childNodes[0].type){case"text":newcell.childNodes[0].value="";break;case"checkbox":newcell.childNodes[0].checked=false;break;case"select-one":newcell.childNodes[0].selectedIndex=0;break;}}}
+function deleteRow(tableID){try{var table=document.getElementById(tableID);var rowCount=table.rows.length;for(var i=0;i<rowCount;i++){var row=table.rows[i];var chkbox=row.cells[0].childNodes[0];if(null!=chkbox&&true==chkbox.checked){if(rowCount<=1){alert("Cannot delete all the rows.");break;}
+table.deleteRow(i);rowCount--;i--;}}}catch(e){alert(e);}}</script>
+
+
+																																       
+																																      
+																																       {% endblock %}
+
