@@ -505,7 +505,7 @@ def invoice_save(request, date, seller):
             try:
                 
                 #Check if entry already present
-                entry = PurchaseInvoice.objects.get(date = date, seller = request.POST['seller'], paid_with = request.POST['paid_with'])
+                entry = PurchaseInvoice.objects.get(date = date, seller = request.POST['seller'], paid_with = request.POST['paid_with'], firm = request.POST['firm'])
                 
             except PurchaseInvoice.DoesNotExist:
                 
